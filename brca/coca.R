@@ -17,6 +17,7 @@ KM <- list()
 coph <- list()
 silh <- matrix(NA, 4, 9)
 MOCmatrix <- matrix(NA, 0, 348)
+num_clusters_each <- rep(NA, 4) # To store chosen number of clusters
 
 # For each dataset
 for(i in 1:4){
@@ -36,12 +37,12 @@ for(i in 1:4){
   }
   
   # Choose number of clusters that maximises the silhouette
-  k_i <- which.max(silh[i,]) + 1
+  num_clusters_each[i] <- which.max(silh[i,]) + 1
   # Re-do k-means with that number of clusters
-  kmeans_k_i <- kmeans(dataset_i, k_i, iter.max = 1000, nstart = 20)
+  kmeans_k_i <- kmeans(dataset_i, num_clusters_each[i], iter.max = 1000, nstart = 20)
   
   # Add corresponding lines to the MOC matrix
-  for(j in 1:k_i){
+  for(j in 1:num_clusters_each[i]){
     MOCmatrix <- rbind(MOCmatrix, (kmeans_k_i$cluster==j)*1)
   }
   prod(colSums(MOCmatrix)) # just to check...
@@ -68,3 +69,4 @@ COCAclusters <- coca(t(MOCmatrix), k_final, B = 1000, pItem = 0.8, hclustMethod 
 
 # Save output (consensus matrix + cluster labels)
 save(COCAclusters, file = "coca.RData")
+save(num_clusters_each, k_final, file = "coca_num_clusters.RData")

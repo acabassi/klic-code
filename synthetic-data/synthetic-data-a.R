@@ -49,29 +49,34 @@ dataset_example <- data[,,1,1]
 example6_dataframe <- as.data.frame(dataset_example)
 example6_dataframe$cluster <- as.factor(cluster_labels)
 ggpairs(data=example6_dataframe, # data.frame with variables
-        columns=c(1,2,3), # columns to plot, default to all.
         title="Datasets with the same cluster separability",  # title of the plot
         mapping=ggplot2::aes(colour = cluster))
 ggsave("synthetic-data-a.pdf", width = 7, height = 7)
 
 save(data, file = "synthetic-data-a.RData")
 
-### One at a time ###
+### Clustering one dataset at a time ###
 
 library(coca)
 
 CM <- array(NA, c(n_obs_per_cluster*n_clusters, n_obs_per_cluster*n_clusters,
                   n_datasets_same_rho, n_experiments))
+
 ari_one <- array(NA, c(n_datasets_same_rho, n_experiments))
 
+# Initialise parameters for kernel k-means
 parameters <- list()
 parameters$cluster_count <- n_clusters
 
 for(i in 1:n_datasets_same_rho){
   for(j in 1:n_experiments){
+    # Use consensus clustering to find kernel matrix
     CM_temp <- consensusCluster(data[,,i,j], n_clusters)
-    CM[,,i,j] <- spectrumShift(CM_temp)
-    kkmeans_labels <- kkmeansTrain(CM[,,i,j], parameters)$clustering
+    # Shift the eigenvalues of the kernel matrix so that it is positive semi-definite
+    CM_temp <- spectrumShift(CM_temp)
+    # Use kernel k-means to find clusters
+    kkmeans_labels <- kkmeansTrain(CM_temp, parameters)$clustering
+    # Compute ARI
     ari_one[i,j] <- adjustedRandIndex(kkmeans_labels, cluster_labels)
   }
 }
@@ -86,15 +91,54 @@ weights <- array(NA, c(n_datasets_same_rho, n_experiments))
 
 data_for_klic <- list()
 for(j in 1:n_experiments){
+  
+  # Build list of datasets, input for KLIC
   for(i in 1:n_datasets_same_rho){
     data_for_klic[[i]] <- data[,,i,j]
   }
+  
+  # Run KLIC
   klicOutput <- klic(data_for_klic, n_datasets_same_rho,
                       individualK = rep(n_clusters, n_datasets_same_rho),
                       globalK = n_clusters)
+  
+  # Extract cluster labels and weights
   klic_labels <- klicOutput$globalClusterLabels
-  weights[,j] <- klicOutput$weights
+  weights[,j] <- colMeans(klicOutput$weights)
+  
+  # Compute ARI
   ari_all[j] <- adjustedRandIndex(klic_labels, cluster_labels) 
 }
 
-save(ari_one, ari_all, weights, file = "ari-a.RData")
+### COCA ###
+
+ari_coca <- rep(NA, n_experiments)
+moc <- array(NA, c(dim(data)[1],n_clusters*n_datasets_same_rho))
+
+for(i in 1:n_experiments){
+  
+  # Over-write the matrix-of-clusters each time
+  count <- 0
+  
+  # Find clusters in each dataset
+  for(j in 1:n_datasets_same_rho){
+    
+    kmeans_cluster_labels <- kmeans(data[,,j,i], n_clusters)$cluster
+    
+    # Fill the matrix-of-clusters
+    for(l in 1:n_clusters){
+      count <- count + 1
+      moc[which(kmeans_cluster_labels == l), count] <- 1
+      moc[which(kmeans_cluster_labels != l), count] <- 0
+    }
+  }
+  
+  # Use COCA to find final clusters
+  coca_cluster_labels <- coca(moc, n_clusters)$clusterLabels
+  # Compute ARI 
+  ari_coca[i] <- adjustedRandIndex(cluster_labels, coca_cluster_labels)
+}
+
+# Save results
+save(ari_one, ari_all, weights, ari_coca, file = "ari-a.RData")
+

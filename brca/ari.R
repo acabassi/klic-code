@@ -5,9 +5,13 @@
 rm(list=ls())
 
 # Load clusterings found with KLIC
-#load("ukic.RData")
-load("coca.RData")
+load("u-klic-reduced.RData")
+UKLICclusters <- klicOutput$globalClusterLabels
+rm(klicOutput)
+load("coca-reduced.RData")
+COCAclusters <- COCAclusters$clusterLabels
 #load("skic2.RData")
+
 
 # IDs of the tumour samples..
 GE = read.csv("context1_GE.csv", header = TRUE)
@@ -15,10 +19,10 @@ namesExp = names(GE)[2:349]
 namesExp = substr(namesExp,1,12)
 namesExp = gsub(".", "-", namesExp, fixed = TRUE)
 
-# UKICclusters <- as.matrix(UKICclusters)
-# rownames(UKICclusters)<- namesExp
+UKLICclusters <- as.matrix(UKLICclusters)
+rownames(UKLICclusters)<- namesExp
 
-COCAclusters <- as.matrix(COCAclusters$clusterLabels)
+COCAclusters <- as.matrix(COCAclusters)
 rownames(COCAclusters) <- namesExp
 
 # SKICclusters <- as.matrix(SKICclusters)
@@ -51,12 +55,15 @@ PAM50[PAM50 == 'Luminal B'] = 4
 PAM50[PAM50 == 'Normal-like'] = 5
 table(PAM50)
 
-save(PAM50bi, file = "PAM50_binary.RData")
-save(PAM50, file = "PAM50.RData")
+# save(PAM50bi, file = "PAM50_binary.RData")
+# save(PAM50, file = "PAM50.RData")
 
 library(mclust)
-# adjustedRandIndex(PAM50bi, UKICclusters)
+adjustedRandIndex(PAM50bi, UKLICclusters)
 adjustedRandIndex(PAM50bi, COCAclusters)
-# adjustedRandIndex(UKICclusters, COCAclusters)
+adjustedRandIndex(UKLICclusters, COCAclusters)
 # adjustedRandIndex(PAM50bi, SKICclusters)
 # adjustedRandIndex(UKICclusters, SKICclusters)
+
+adjustedRandIndex(PAM50, UKLICclusters)
+adjustedRandIndex(PAM50, COCAclusters)

@@ -105,7 +105,7 @@ for(i in 1:n_types){
     # Shift the eigenvalues of the kernel matrix so that it is positive semi-definite
     CM_temp <- spectrumShift(CM_temp)
     # Use kernel k-means to find clusters
-    kkmeans_labels <- kkmeansTrain(CM_temp, parameters)$clustering
+    kkmeans_labels <- kkmeans(CM_temp, parameters)$clustering
     # Compute ARI
     ari_one[i,j] <- adjustedRandIndex(kkmeans_labels, cluster_labels)
   }
@@ -151,30 +151,30 @@ for(j in 1:n_experiments){
 save(ari_one, ari_all, weights, file = "ari-c.RData")
 
 
-# Load results
-load("ari-c.RData")
-
-dim(ari_one)
-dim(as.matrix(ari_all))
-ari <- cbind(t(ari_one), t(ari_all))
-colnames(ari) <- c("0", "1", "2", "3", "0+1+2", "0+1+3", "0+2+3", "1+2+3")
-
-ari.m <- melt(ari)
-ari.m # pasting some rows of the melted data.frame
-
-ggplot(data = ari.m, aes(x=X2, y=value)) + geom_boxplot() + ylim(0,1)
-ggsave("ari-c.pdf")
-
-dim(weights)
-
-dimnames(weights) <- list(c("1st", "2nd", "3rd"), c("0+1+2", "0+1+3", "0+2+3", "1+2+3"), 1:100)
-
-labels <- matrix(data = c("0","1","2","0","1","3","0","2","3","1","2","3"), nrow = 4, ncol = 3, byrow = TRUE)
-for(i in 1:4){
-  weights_i <- weights[,i,]
-  rownames(weights_i) <- labels[i,]
-  weights.m <- melt(t(weights_i))
-  ggplot(data = weights.m, aes(x=as.character(X2), y=value)) + geom_boxplot() + ylim(0,1)
-  ggsave(paste("weights-c",as.character(i),".pdf", sep=""))
-}
-
+# # Load results
+# load("ari-c.RData")
+# 
+# dim(ari_one)
+# dim(as.matrix(ari_all))
+# ari <- cbind(t(ari_one), t(ari_all))
+# colnames(ari) <- c("0", "1", "2", "3", "0+1+2", "0+1+3", "0+2+3", "1+2+3")
+# 
+# ari.m <- melt(ari)
+# ari.m # pasting some rows of the melted data.frame
+# 
+# ggplot(data = ari.m, aes(x=X2, y=value)) + geom_boxplot() + ylim(0,1)
+# ggsave("ari-c.pdf")
+# 
+# dim(weights)
+# 
+# dimnames(weights) <- list(c("1st", "2nd", "3rd"), c("0+1+2", "0+1+3", "0+2+3", "1+2+3"), 1:100)
+# 
+# labels <- matrix(data = c("0","1","2","0","1","3","0","2","3","1","2","3"), nrow = 4, ncol = 3, byrow = TRUE)
+# for(i in 1:4){
+#   weights_i <- weights[,i,]
+#   rownames(weights_i) <- labels[i,]
+#   weights.m <- melt(t(weights_i))
+#   ggplot(data = weights.m, aes(x=as.character(X2), y=value)) + geom_boxplot() + ylim(0,1)
+#   ggsave(paste("weights-c",as.character(i),".pdf", sep=""))
+# }
+# 

@@ -62,8 +62,6 @@ save(data, file = "synthetic-data-a.RData")
 
 ### Clustering one dataset at a time ###
 
-library(coca)
-
 CM <- array(NA, c(n_obs_per_cluster*n_clusters, n_obs_per_cluster*n_clusters,
                   n_datasets_same_rho, n_experiments))
 

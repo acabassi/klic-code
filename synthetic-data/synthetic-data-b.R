@@ -9,6 +9,11 @@ library(MASS)
 library(ggplot2)
 library(GGally)
 library(reshape)
+library(klic)
+library(coca)
+library(mclust)
+library(reshape2)
+library(ggplot2)
 
 ### Data generation ### 
 ### B. Six clusters, each dataset has a different level of cluster separability ###
@@ -66,8 +71,6 @@ save(data, file = "synthetic-data-b.RData")
 
 ### Clustering one dataset at a time ###
 
-library(coca)
-
 ari_one <- array(NA, c(n_separation_levels, n_experiments))
 
 # Initialise parameters for kernel k-means
@@ -81,7 +84,7 @@ for(i in 1:n_separation_levels){
     # Shift the eigenvalues of the kernel matrix so that it is positive semi-definite
     CM_temp <- spectrumShift(CM_temp)
     # Use kernel k-means to find clusters
-    kkmeans_labels <- kkmeansTrain(CM_temp, parameters)$clustering
+    kkmeans_labels <- kkmeans(CM_temp, parameters)$clustering
     # Compute ARI
     ari_one[i,j] <- adjustedRandIndex(kkmeans_labels, cluster_labels)
   }
@@ -91,9 +94,6 @@ for(i in 1:n_separation_levels){
 
 n_subsets <- 4
 n_datasets_per_subset <- 3
-
-library(klic)
-library(mclust)
 
 ari_all <- array(NA, c(n_subsets, n_experiments))
 weights <- array(NA, c(n_datasets_per_subset, n_subsets, n_experiments))
@@ -161,3 +161,31 @@ for(i in 1:n_experiments){
 
 # Save results
 save(ari_one, ari_all, weights, ari_coca, file = "ari-b.RData")
+
+# Load results
+load("ari-b.RData")
+
+dim(ari_one)
+dim(as.matrix(ari_all))
+ari <- cbind(t(ari_one), t(ari_all))
+colnames(ari) <- c("0", "1", "2", "3", "0+1+2", "0+1+3", "0+2+3", "1+2+3")
+
+ari.m <- melt(ari)
+ari.m # pasting some rows of the melted data.frame
+
+ggplot(data = ari.m, aes(x=X2, y=value)) + geom_boxplot() + ylim(0,1)
+ggsave("ari-b.pdf")
+
+dim(weights)
+
+dimnames(weights) <- list(c("1st", "2nd", "3rd"), c("0+1+2", "0+1+3", "0+2+3", "1+2+3"), 1:100)
+
+labels <- matrix(data = c("0","1","2","0","1","3","0","2","3","1","2","3"), nrow = 4, ncol = 3, byrow = TRUE)
+for(i in 1:4){
+  weights_i <- weights[,i,]
+  rownames(weights_i) <- labels[i,]
+  weights.m <- melt(t(weights_i))
+  ggplot(data = weights.m, aes(x=as.character(X2), y=value)) + geom_boxplot() + ylim(0,1)
+  ggsave(paste("weights-b",as.character(i),".pdf", sep=""))
+}
+

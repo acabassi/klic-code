@@ -9,6 +9,11 @@ library(MASS)
 library(ggplot2)
 library(GGally)
 library(reshape)
+library(coca)
+library(klic)
+library(mclust)
+library(reshape2)
+library(ggplot2)
 
 ### Data generation ### 
 ### C1. Six clusters ###
@@ -87,8 +92,6 @@ save(data, file = "synthetic-data-c.RData")
 
 ### Clustering one dataset at a time ###
 
-library(coca)
-
 ari_one <- array(NA, c(n_separation_levels, n_experiments))
 
 # Initialise parameters for kernel k-means
@@ -112,9 +115,6 @@ for(i in 1:n_types){
 
 n_subsets <- 2
 n_datasets_per_subset <- 2
-
-library(klic)
-library(mclust)
 
 ari_all <- array(NA, c(n_subsets, n_experiments))
 weights <- array(NA, c(n_datasets_per_subset, n_subsets, n_experiments))
@@ -149,3 +149,32 @@ for(j in 1:n_experiments){
 }
 
 save(ari_one, ari_all, weights, file = "ari-c.RData")
+
+
+# Load results
+load("ari-c.RData")
+
+dim(ari_one)
+dim(as.matrix(ari_all))
+ari <- cbind(t(ari_one), t(ari_all))
+colnames(ari) <- c("0", "1", "2", "3", "0+1+2", "0+1+3", "0+2+3", "1+2+3")
+
+ari.m <- melt(ari)
+ari.m # pasting some rows of the melted data.frame
+
+ggplot(data = ari.m, aes(x=X2, y=value)) + geom_boxplot() + ylim(0,1)
+ggsave("ari-c.pdf")
+
+dim(weights)
+
+dimnames(weights) <- list(c("1st", "2nd", "3rd"), c("0+1+2", "0+1+3", "0+2+3", "1+2+3"), 1:100)
+
+labels <- matrix(data = c("0","1","2","0","1","3","0","2","3","1","2","3"), nrow = 4, ncol = 3, byrow = TRUE)
+for(i in 1:4){
+  weights_i <- weights[,i,]
+  rownames(weights_i) <- labels[i,]
+  weights.m <- melt(t(weights_i))
+  ggplot(data = weights.m, aes(x=as.character(X2), y=value)) + geom_boxplot() + ylim(0,1)
+  ggsave(paste("weights-c",as.character(i),".pdf", sep=""))
+}
+

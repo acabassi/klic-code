@@ -9,6 +9,11 @@ library(MASS)
 library(ggplot2)
 library(GGally)
 library(reshape)
+library(klic)
+library(coca)
+library(mclust)
+library(reshape2)
+library(ggplot2)
 
 ### Data generation ### 
 ### A. Six clusters, same cluster separability in each dataset ###
@@ -75,16 +80,13 @@ for(i in 1:n_datasets_same_rho){
     # Shift the eigenvalues of the kernel matrix so that it is positive semi-definite
     CM_temp <- spectrumShift(CM_temp)
     # Use kernel k-means to find clusters
-    kkmeans_labels <- kkmeansTrain(CM_temp, parameters)$clustering
+    kkmeans_labels <- kkmeans(CM_temp, parameters)$clustering
     # Compute ARI
     ari_one[i,j] <- adjustedRandIndex(kkmeans_labels, cluster_labels)
   }
 }
 
 ### All together ###
-
-library(klic)
-library(mclust)
 
 ari_all <- rep(NA, n_experiments)
 weights <- array(NA, c(n_datasets_same_rho, n_experiments))
@@ -142,3 +144,23 @@ for(i in 1:n_experiments){
 # Save results
 save(ari_one, ari_all, weights, ari_coca, file = "ari-a.RData")
 
+# Load results
+load("ari-a.RData")
+
+dim(ari_one)
+dim(as.matrix(ari_all))
+ari <- cbind(t(ari_one), as.matrix(ari_all))
+colnames(ari) <- c("a", "b", "c", "klic")
+
+ari.m <- melt(ari)
+ari.m # pasting some rows of the melted data.frame
+
+ggplot(data = ari.m, aes(x=X2, y=value)) + geom_boxplot() + ylim(0,1)
+ggsave("ari-a.pdf")
+
+dim(weights)
+rownames(weights) <- c("a", "b", "c")
+weights.m <- melt(t(weights))
+weights.m
+ggplot(data = weights.m, aes(x=X2, y=value)) + geom_boxplot() + ylim(0,1)
+ggsave("weights-a.pdf")

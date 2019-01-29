@@ -15,6 +15,16 @@ library(mclust)
 library(reshape2)
 library(ggplot2)
 
+# Define ggplot2 theme 
+my_theme <-  theme(
+    panel.background = element_rect(fill = NA),
+    panel.grid.major = element_line(colour = "grey50"),
+    panel.grid.major.x = element_blank() ,
+    panel.grid.major.y = element_line(size=.1, color="black"),
+    axis.ticks.y = element_blank(),
+    axis.ticks.x = element_blank()
+)
+
 ### Data generation ### 
 ### A. Six clusters, same cluster separability in each dataset ###
 
@@ -148,17 +158,21 @@ load("ari-a.RData")
 dim(ari_one)
 dim(as.matrix(ari_all))
 ari <- cbind(t(ari_one), as.matrix(ari_all))
-colnames(ari) <- c("a", "b", "c", "klic")
+colnames(ari) <- c("A", "B", "C", "A+B+C")
 
 ari.m <- melt(ari)
-ari.m # pasting some rows of the melted data.frame
+head(ari.m) # pasting some rows of the melted data.frame
+colnames(ari.m) <- c("Experiment", "Datasets", "ARI")
+ari.m$Datasets <- factor(ari.m$Datasets,
+                              levels = c("A","B", "C", "A+B+C"), ordered = TRUE)
 
-ggplot(data = ari.m, aes(x=X2, y=value)) + geom_boxplot() + ylim(0,1)
-ggsave("ari-a.pdf")
+ggplot(data = ari.m, aes(x=Datasets, y=ARI)) + geom_boxplot() + ylim(0,1) + my_theme
+ggsave("ari-a.pdf", width = 15, height = 10, units = "cm")
 
 dim(weights)
-rownames(weights) <- c("a", "b", "c")
+rownames(weights) <- c("A", "B", "C")
 weights.m <- melt(t(weights))
-weights.m
-ggplot(data = weights.m, aes(x=X2, y=value)) + geom_boxplot() + ylim(0,1)
-ggsave("weights-a.pdf")
+head(weights.m)
+colnames(weights.m) <- c("Experiment", "Dataset", "Weight")
+ggplot(data = weights.m, aes(x=Dataset, y=Weight)) + geom_boxplot() + ylim(0,1) + my_theme
+ggsave("weights-a.pdf", width = 12, height = 10, units = "cm")

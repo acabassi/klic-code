@@ -15,6 +15,16 @@ library(mclust)
 library(reshape2)
 library(ggplot2)
 
+# Define ggplot2 theme 
+my_theme <-  theme(
+    panel.background = element_rect(fill = NA),
+    panel.grid.major = element_line(colour = "grey50"),
+    panel.grid.major.x = element_blank() ,
+    panel.grid.major.y = element_line(size=.1, color="black"),
+    axis.ticks.y = element_blank(),
+    axis.ticks.x = element_blank()
+)
+
 ### Data generation ### 
 ### B. Six clusters, each dataset has a different level of cluster separability ###
 
@@ -55,7 +65,8 @@ example6_dataframe$cluster <- as.factor(cluster_labels)
 names(example6_dataframe) <- list("Var 1", "Var 2", "Cluster")
 ggpairs(data=example6_dataframe, # data.frame with variables
         title="Well separated clusters",  # title of the plot
-        mapping=ggplot2::aes(colour = Cluster))
+        mapping=ggplot2::aes(colour = Cluster),
+        lower=list(combo=wrap("facethist", binwidth=0.8)))
 ggsave("synthetic-data-b1.pdf", width = 7, height = 7)
 
 # Not so well separated clusters
@@ -64,7 +75,8 @@ example2_dataframe <- as.data.frame(dataset_example)
 example2_dataframe$cluster <- as.factor(cluster_labels)
 ggpairs(data=example2_dataframe, # data.frame with variables
         title="Not so well separated clusters", # title of the plot 
-        mapping = ggplot2::aes(colour= cluster))
+        mapping = ggplot2::aes(colour= cluster),
+        lower=list(combo=wrap("facethist", binwidth=0.8)))
 ggsave("synthetic-data-b2.pdf", width = 7, height = 7)
 
 save(data, file = "synthetic-data-b.RData")
@@ -128,14 +140,14 @@ for(j in 1:n_experiments){
 
 ### COCA ###
 
-ari_coca <- rep(NA, n_experiments)
+ari_coca <- matrix(NA, n_subsets, n_experiments)
 moc <- array(NA, c(dim(data)[1], n_clusters*n_datasets_per_subset))
 
 for(i in 1:n_experiments){
   for(j in 1:n_subsets){
     
   # Select datasets 
-  datasets_in_subset <- subsets[i,]
+  datasets_in_subset <- subsets[j,]
   
   # Over-write the matrix-of-clusters each time
   count <- 0
@@ -171,21 +183,24 @@ ari <- cbind(t(ari_one), t(ari_all))
 colnames(ari) <- c("0", "1", "2", "3", "0+1+2", "0+1+3", "0+2+3", "1+2+3")
 
 ari.m <- melt(ari)
-ari.m # pasting some rows of the melted data.frame
+head(ari.m)
+colnames(ari.m) <- c("Experiment", "Dataset", "ARI")
 
-ggplot(data = ari.m, aes(x=X2, y=value)) + geom_boxplot() + ylim(0,1)
-ggsave("ari-b.pdf")
+ggplot(data = ari.m, aes(x=Dataset, y=ARI)) + geom_boxplot() + ylim(0,1) + my_theme
+ggsave("ari-b.pdf", width = 15, height = 10, units = "cm")
 
 dim(weights)
 
-dimnames(weights) <- list(c("1st", "2nd", "3rd"), c("0+1+2", "0+1+3", "0+2+3", "1+2+3"), 1:100)
+dimnames(weights) <- list(c("1st", "2nd", "3rd"), c("0+1+2", "0+1+3", "0+2+3", "1+2+3"), 1:n_experiments)
 
 labels <- matrix(data = c("0","1","2","0","1","3","0","2","3","1","2","3"), nrow = 4, ncol = 3, byrow = TRUE)
-for(i in 1:4){
+for(i in 1:n_subsets){
   weights_i <- weights[,i,]
   rownames(weights_i) <- labels[i,]
   weights.m <- melt(t(weights_i))
-  ggplot(data = weights.m, aes(x=as.character(X2), y=value)) + geom_boxplot() + ylim(0,1)
-  ggsave(paste("weights-b",as.character(i),".pdf", sep=""))
+  colnames(weights.m) <- c("Experiment", "Dataset", "Weight")
+  weights.m$Dataset <- factor(weights.m$Dataset, levels = labels[i,], ordered = TRUE)
+  ggplot(data = weights.m, aes(x=Dataset, y=Weight)) + geom_boxplot() + ylim(0,1) + my_theme
+  ggsave(paste("weights-b", as.character(i), ".pdf", sep=""), width = 12, height = 10, units = "cm")
 }
 

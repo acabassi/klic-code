@@ -179,12 +179,8 @@ colnames(ari.m) <- c("Experiment", "Datasets", "ARI")
 ari.m$Datasets <- factor(ari.m$Datasets,
                        levels = c("3","6", "6*", "3+6", "3+6*"), ordered = TRUE)
 
-ggplot(data = ari.m, aes(x=Datasets, y=ARI)) + geom_boxplot() + ylim(0,1) + theme(
-    panel.background = element_rect(fill = NA),
-    panel.grid.major = element_line(colour = "grey50"),
-    panel.ontop = TRUE
-)
-ggsave("ari-c.pdf")
+ggplot(data = ari.m, aes(x=Datasets, y=ARI)) + geom_boxplot() + ylim(0,1) + my_theme
+ggsave("ari-c.pdf", width = 15, height = 10, units = "cm")
 
 dim(weights)
  
@@ -203,11 +199,11 @@ weights_1.m$Dataset <- factor(weights_1.m$Dataset,
 
 
 ggplot(data = weights_1.m, aes(x=Dataset, y=Weight)) + geom_boxplot() + ylim(0,1) + my_theme
-ggsave(paste("weights-c1.pdf", sep=""))
+ggsave(paste("weights-c1.pdf", sep=""), width = 6, height = 10, units = "cm")
 
 weights_2.m <- melt(t(weights_2))
 head(weights_2.m) 
 colnames(weights_2.m) <- c("Experiments", "Dataset", "Weight")
 
 ggplot(data = weights_2.m, aes(x=Dataset, y=Weight)) + geom_boxplot() + ylim(0,1) + my_theme
-ggsave(paste("weights-c2.pdf", sep=""))
+ggsave(paste("weights-c2.pdf", sep=""), width = 6, height = 10, units = "cm")

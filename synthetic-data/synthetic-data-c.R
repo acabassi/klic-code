@@ -28,7 +28,7 @@ my_theme <-  theme(
 ### Data generation ### 
 ### C1. Six clusters ###
 
-n_experiments <- 13
+n_experiments <- 100
 n_separation_levels <- 1
 n_types <- 3
 n_variables <- 2

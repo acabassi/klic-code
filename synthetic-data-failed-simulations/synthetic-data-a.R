@@ -30,7 +30,7 @@ my_theme <-  theme(
 
 n_experiments <- 100
 n_separation_levels <- 1
-n_datasets_same_rho <- 3
+n_datasets_same_rho <- 5
 n_variables <- 2
 n_obs_per_cluster <- 50
 n_clusters <- 6

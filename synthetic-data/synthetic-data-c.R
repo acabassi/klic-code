@@ -29,7 +29,7 @@ my_theme <-  theme(
 ### C1. Six clusters ###
 
 n_experiments <- 100
-n_separation_levels <- 1
+# n_separation_levels <- 1
 n_types <- 3
 n_variables <- 2
 n_obs_per_cluster <- 50
@@ -44,12 +44,10 @@ Sigma <- diag(n_variables)
 i = 3 # Medium separation level
 for(j in 1:n_experiments){
   mu = rep(NA, N)
-  for(k in 1:n_clusters){
-    for(t in 1:(n_types-1)){
-      for(k in 1:(n_clusters/t)){
-          mu = rep(k*(i-1)/2, n_variables)
+  for(t in 1:(n_types-1)){
+    for(k in 1:(n_clusters/t)){
+      mu = rep(k*(i-1)/3, n_variables)
       data[((k-1)*n_obs_per_cluster*t+1):(k*n_obs_per_cluster*t),,t,j] <- mvrnorm(n = n_obs_per_cluster*t, mu, Sigma)
-      }
     }
   }
 }
@@ -58,13 +56,11 @@ i = 9 # Higher separation level
 t = 1 # Only for dataset containing 6 clusters
 for(j in 1:n_experiments){
   mu = rep(NA, N)
-  for(k in 1:n_clusters){
-      for(k in 1:(n_clusters/t)){
-        mu = rep(k*(i-1)/2, n_variables)
-        data[((k-1)*n_obs_per_cluster*t+1):(k*n_obs_per_cluster*t),,3,j] <- mvrnorm(n = n_obs_per_cluster*t, mu, Sigma)
-      }
+    for(k in 1:(n_clusters/t)){
+      mu = rep(k*(i-1)/3, n_variables)
+      data[((k-1)*n_obs_per_cluster*t+1):(k*n_obs_per_cluster*t),,3,j] <- mvrnorm(n = n_obs_per_cluster*t, mu, Sigma)
     }
-  }
+}
 
 ### Plots ###
 

@@ -46,7 +46,7 @@ for(i in 1:n_separation_levels){
   for(j in 1:n_experiments){
     mu = rep(NA, N)
     for(k in 1:n_clusters){
-      mu = rep(k*(i-1)/2, n_variables)
+      mu = rep(k*(i-1), n_variables)
       data[((k-1)*n_obs_per_cluster+1):(k*n_obs_per_cluster),,i,j] <- mvrnorm(n = n_obs_per_cluster, mu, Sigma)
     }
   }
@@ -185,6 +185,8 @@ colnames(ari) <- c("0", "1", "2", "3", "0+1+2", "0+1+3", "0+2+3", "1+2+3")
 ari.m <- melt(ari)
 head(ari.m)
 colnames(ari.m) <- c("Experiment", "Dataset", "ARI")
+ari.m$Dataset <- factor(ari.m$Dataset,
+                         levels = c("0","1", "2", "3", "4", "0+1+2", "0+1+3", "0+2+3", "1+2+3"), ordered = TRUE)
 
 ggplot(data = ari.m, aes(x=Dataset, y=ARI)) + geom_boxplot() + ylim(0,1) + my_theme
 ggsave("ari-b.pdf", width = 15, height = 10, units = "cm")
@@ -201,7 +203,7 @@ ggplot(data = weights.m, aes(x=Dataset, y=Weight)) + geom_boxplot() + ylim(0,1) 
 ggsave("weights-b.pdf", width = 15, height = 11, units = "cm")
 
 # Plot comparison
-ari_comparison <- array(c(ari_all, ari_coca), dim = c(4, 100, 2))
+ari_comparison <- array(c(ari_all, ari_coca), dim = c(4, n_experiments, 2))
 dimnames(ari_comparison) <- list(c("0+1+2", "0+1+3", "0+2+3", "1+2+3"), 1:n_experiments, c("KLIC", "COCA"))
 ari_comparison.m <- melt(ari_comparison)
 

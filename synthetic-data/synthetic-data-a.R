@@ -160,13 +160,13 @@ load("ari-a.RData")
 dim(ari_one)
 dim(as.matrix(ari_all))
 ari <- cbind(t(ari_one), as.matrix(ari_all))
-colnames(ari) <- c("A", "B", "C", "A+B+C")
+colnames(ari) <- c("A", "B", "C", "D", "A+B+C")
 
 ari.m <- melt(ari)
 head(ari.m) # pasting some rows of the melted data.frame
 colnames(ari.m) <- c("Experiment", "Datasets", "ARI")
 ari.m$Datasets <- factor(ari.m$Datasets,
-                              levels = c("A","B", "C", "A+B+C"), ordered = TRUE)
+                              levels = c("A","B", "C", "D", "A+B+C"), ordered = TRUE)
 
 ggplot(data = ari.m, aes(x=Datasets, y=ARI)) + geom_boxplot() + ylim(0,1) + my_theme
 ggsave("ari-a.pdf", width = 15, height = 10, units = "cm")
@@ -174,7 +174,7 @@ ggsave("ari-a.pdf", width = 15, height = 10, units = "cm")
 # Plot weights
 
 dim(weights)
-rownames(weights) <- c("A", "B", "C")
+rownames(weights) <- c("A", "B", "C", "D")
 weights.m <- melt(t(weights))
 head(weights.m)
 colnames(weights.m) <- c("Experiment", "Dataset", "Weight")

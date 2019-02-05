@@ -30,7 +30,7 @@ my_theme <-  theme(
 
 n_experiments <- 100
 n_separation_levels <- 1
-n_datasets_same_rho <- 3
+n_datasets_same_rho <- 4
 n_variables <- 2
 n_obs_per_cluster <- 50
 n_clusters <- 6
@@ -153,20 +153,20 @@ for(i in 1:n_experiments){
 save(ari_one, ari_all, weights, ari_coca, file = "ari-a.RData")
 
 # Load results
-load("ari-a.RData")
+#load("ari-a.RData")
 
 # Plot ARI
 
 dim(ari_one)
 dim(as.matrix(ari_all))
 ari <- cbind(t(ari_one), as.matrix(ari_all))
-colnames(ari) <- c("A", "B", "C", "D", "A+B+C")
+colnames(ari) <- c("A", "B", "C", "D", "A+B+C+D")
 
 ari.m <- melt(ari)
 head(ari.m) # pasting some rows of the melted data.frame
 colnames(ari.m) <- c("Experiment", "Datasets", "ARI")
 ari.m$Datasets <- factor(ari.m$Datasets,
-                              levels = c("A","B", "C", "D", "A+B+C"), ordered = TRUE)
+                              levels = c("A", "B", "C", "D", "A+B+C+D"), ordered = TRUE)
 
 ggplot(data = ari.m, aes(x=Datasets, y=ARI)) + geom_boxplot() + ylim(0,1) + my_theme
 ggsave("ari-a.pdf", width = 15, height = 10, units = "cm")

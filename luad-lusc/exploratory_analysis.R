@@ -10,7 +10,7 @@ load("TCGA_LUSC_match.RData")
 
 library(pheatmap)
 library(devtools)
-install_github("vqv/ggbiplot")
+# install_github("vqv/ggbiplot")
 library(ggbiplot)
 
 dim(luad$RNA_seq) # 20502 X 59

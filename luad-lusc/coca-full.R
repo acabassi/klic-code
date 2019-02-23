@@ -3,11 +3,11 @@
 ##########################
 
 rm(list=ls())
-# setwd("/home/ac2051/rds/hpc-work/klic-code/luad-lusc/")
-setwd("~/OneDrive - University of Cambridge, MRC Biostatistics Unit/PHD-PROJECTS/klic-code/luad-lusc/")
+setwd("/home/ac2051/rds/hpc-work/klic-code/luad-lusc/")
+# setwd("~/OneDrive - University of Cambridge, MRC Biostatistics Unit/PHD-PROJECTS/klic-code/luad-lusc/")
 
-# library(devtools)
-# install_github("acabassi/coca")
+library(devtools)
+install_github("acabassi/coca")
 # currently using version 1.0.0-alpha: DOI 10.5281/zenodo.2562342
 library(coca)
 library(mclust)
@@ -21,16 +21,16 @@ load("annotations.RData")
 
 pca_RNAseq <- prcomp(lu$RNA_seq, center = TRUE, scale = TRUE)
 ggbiplot(pca_RNAseq, var.axes = F, groups = groups$Type)
-# ggsave("pca_RNAseq_reduced.png")
+ggsave("pca_RNAseq.png")
 
 # Here I try to do PCA on the mutation but IT IS BINARY DATA
 pca_mutation <- prcomp(lu$mutation, center = FALSE, scale = FALSE)
 ggbiplot(pca_mutation, var.axes = F, groups = groups$Type)
-# ggsave("pca_mutation_reduced.png")
+ggsave("pca_mutation.png")
 
 pca_miRNAseq <- prcomp(lu$miRNAseq, center = TRUE, scale = TRUE)
 ggbiplot(pca_miRNAseq, var.axes = F, groups = groups$Type)
-# ggsave("pca_miRNAseq_reduced.png")
+ggsave("pca_miRNAseq.png")
 
 ### Scale non-binary datasets
 
@@ -62,7 +62,7 @@ for(i in 2:10){
 table(groups_RNAseq[[2]])
 # Maybe the ward.D linkage gives more sensible results
 
-png('reduced_RNAseq.png')
+png('RNAseq.png')
 pheatmap(lu$RNAseq[,1:500], annotation_row = groups_RNAseq,
          show_rownames = FALSE, show_colnames = FALSE, annotation_legend = TRUE, 
          cluster_rows = FALSE)
@@ -82,7 +82,7 @@ for(i in 2:20){
     groups_mutation[[i]] <- as.factor(cutree(hc_mutation, k = i))
 }
 
-png('reduced_mutations.png')
+png('mutations.png')
 pheatmap(lu$mutation[,1:500], annotation_row = groups_mutation,
          show_rownames = FALSE, show_colnames = FALSE, annotation_legend = FALSE, 
          cluster_rows = FALSE, clustering_distance_rows = "binary")
@@ -100,7 +100,7 @@ for(i in 2:5){
     groups_miRNAseq[[i]] <- as.factor(cutree(hc_miRNAseq, k = i))
 }
 
-png('reduced_miRNAseq.png')
+png('miRNAseq.png')
 pheatmap(lu$miRNAseq[,1:500], annotation_row = groups_miRNAseq,
          show_rownames = FALSE, show_colnames = FALSE, annotation_legend = FALSE, 
          cluster_rows = FALSE, clustering_distance_rows = "euclidean")

@@ -5,11 +5,13 @@
 
 rm(list = ls())
 
-library(klic)
 library(coca)
-library(mclust)
+library(iCluster)
+library(klic)
+library(mclust) # for adjustedRandIndex
+library(rdetools) # for rbfkernel
 
-j <- 1 # as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+j <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 
 ### Data generation ### 
 ### B. Six clusters, each dataset has a different level of cluster ###
@@ -30,26 +32,149 @@ P <- n_variables
 uno <- rep(1, n_obs_per_cluster)
 cluster_labels <- c(uno, uno*2, uno*3, uno*4, uno*5, uno*6)
 
-load("../synthetic-data/synthetic-data-b.RData")
+load("../data/synthetic-data-b.RData")
 
 ### Clustering one dataset at a time ###
 
-ari_one <- rep(NA, n_separation_levels)
+ari_one <- ari_one_rbfk <-rep(NA, n_separation_levels)
 
 # Initialise parameters for kernel k-means
+RBFsigma <- 5
 parameters <- list()
-parameters$cluster_count_m <- n_clusters
+parameters$cluster_count <- n_clusters
+parameters$iteration_count <- 100
+CM_rbfk <- CM_cc <- array(NA, c(N, N, n_separation_levels))
+dimnames(CM_rbfk) <- dimnames(CM_cc) <-
+  list(as.character(1:N),
+       as.character(1:N),
+       as.character(1:n_separation_levels))
 
 for(i in 1:n_separation_levels){
     # Use consensus clustering to find kernel matrix
-    CM_temp <- consensusCluster(data[,,i,j], n_clusters)
-    # Shift the eigenvalues of the kernel matrix so that it is positive
+    CM_cc_temp <- consensusCluster(data[,,i,j], n_clusters)
+    # Use RBF kernel to obtain another kernel matrix
+    CM_rbfk_temp <- rbfkernel(data[,,i,j], sigma = RBFsigma)
+    # Shift the eigenvalues of the kernel matrices so that they are positive
     # semi-definite
-    CM_temp <- spectrumShift(CM_temp)
+    CM_cc[,,i] <- spectrumShift(CM_cc_temp)
+    CM_rbfk[,,i] <- spectrumShift(CM_rbfk_temp)
     # Use kernel k-means to find clusters
-    kkmeans_labels <- kkmeans(CM_temp, parameters)$clustering
+    kkmeans_labels <- kkmeans(CM_cc[,,i], parameters)$clustering
+    kkmeans_labels_rbfk <- kkmeans(CM_rbfk[,,i], parameters)$clustering
     # Compute ARI
     ari_one[i] <- adjustedRandIndex(kkmeans_labels, cluster_labels)
+    ari_one_rbfk[i] <- adjustedRandIndex(kkmeans_labels_rbfk, cluster_labels)
+}
+
+if(j==1){
+  library(ComplexHeatmap)
+  library(circlize)
+  col_fun = colorRamp2(c(0, 1), c("white","#003C71")) # Dark blue
+  label_colors <- c("#6CACE4", # Light blue
+                    "#E89CAE", # Light pink
+                    "#F1BE48", # Light yellow
+                    "#B7BF10", # Light green
+                    "#85b09A", # Light cambridge blue
+                    "#0072ce") # Core blue
+  names(label_colors) <- as.character(1:n_clusters)
+  row_annotation <- rowAnnotation(Label = as.character(cluster_labels),
+                                 col = list(Label = label_colors),
+                                 show_legend = FALSE,
+                                 show_annotation_name = FALSE,
+                                 annotation_width = unit(0.1, "cm"))
+  
+    H1 <- Heatmap(CM_cc[,,1],
+          col = col_fun,
+          cluster_rows = FALSE,
+          cluster_columns = FALSE,
+          show_heatmap_legend = FALSE,
+          show_row_names = FALSE,
+          show_column_names = FALSE,
+          heatmap_width = unit(5, "cm"),
+          heatmap_height = unit(5, "cm"),
+          right_annotation = row_annotation)
+    H2 <- Heatmap(CM_cc[,,2],
+                 col = col_fun,
+                 cluster_rows = FALSE,
+                 cluster_columns = FALSE,
+                 show_heatmap_legend = FALSE,
+                 show_row_names = FALSE,
+                 show_column_names = FALSE,
+                 heatmap_width = unit(5, "cm"),
+                 heatmap_height = unit(5, "cm"),
+                 right_annotation = row_annotation)
+    H3 <- Heatmap(CM_cc[,,3],
+                 col = col_fun,
+                 cluster_rows = FALSE,
+                 cluster_columns = FALSE,
+                 show_heatmap_legend = FALSE,
+                 show_row_names = FALSE,
+                 show_column_names = FALSE,
+                 heatmap_width = unit(5, "cm"),
+                 heatmap_height = unit(5, "cm"),
+                 right_annotation = row_annotation)
+    H4 <- Heatmap(CM_cc[,,4],
+                 col = col_fun,
+                 cluster_rows = FALSE,
+                 cluster_columns = FALSE,
+                 show_heatmap_legend = TRUE,
+                 show_row_names = FALSE,
+                 show_column_names = FALSE,
+                 heatmap_width = unit(5, "cm"),
+                 heatmap_height = unit(5, "cm"),
+                 right_annotation = row_annotation,
+                 heatmap_legend_param = list(title = ""))
+  
+    jpeg("../figures/heatmap-b.jpg",
+         height = 5.5, width = 23, units = "cm", res = 1200)
+    H1 + H2 + H3 + H4
+    dev.off()
+    
+    H1_RBF <- Heatmap(CM_rbfk[,,1],
+                  col = col_fun,
+                  cluster_rows = FALSE,
+                  cluster_columns = FALSE,
+                  show_heatmap_legend = FALSE,
+                  show_row_names = FALSE,
+                  show_column_names = FALSE,
+                  heatmap_width = unit(5, "cm"),
+                  heatmap_height = unit(5, "cm"),
+                  right_annotation = row_annotation)
+    H2_RBF <- Heatmap(CM_rbfk[,,2],
+                      col = col_fun,
+                      cluster_rows = FALSE,
+                      cluster_columns = FALSE,
+                      show_heatmap_legend = FALSE,
+                      show_row_names = FALSE,
+                      show_column_names = FALSE,
+                      heatmap_width = unit(5, "cm"),
+                      heatmap_height = unit(5, "cm"),
+                      right_annotation = row_annotation)
+    H3_RBF <- Heatmap(CM_rbfk[,,3],
+                      col = col_fun,
+                      cluster_rows = FALSE,
+                      cluster_columns = FALSE,
+                      show_heatmap_legend = FALSE,
+                      show_row_names = FALSE,
+                      show_column_names = FALSE,
+                      heatmap_width = unit(5, "cm"),
+                      heatmap_height = unit(5, "cm"),
+                      right_annotation = row_annotation)
+    H4_RBF <- Heatmap(CM_rbfk[,,4],
+                      col = col_fun,
+                      cluster_rows = FALSE,
+                      cluster_columns = FALSE,
+                      show_heatmap_legend = TRUE,
+                      show_row_names = FALSE,
+                      show_column_names = FALSE,
+                      heatmap_width = unit(5, "cm"),
+                      heatmap_height = unit(5, "cm"),
+                      right_annotation = row_annotation,
+                      heatmap_legend_param = list(title = ""))
+    jpeg(paste0("../figures/heatmap-b-rbf-sigma", RBFsigma,".jpg"),
+         height = 5.5, width = 23, units = "cm", res = 1200)
+    H1_RBF + H2_RBF + H3_RBF + H4_RBF
+    dev.off()
 }
 
 ### Combining subsets of three datasets ###
@@ -87,7 +212,7 @@ for(i in 1:n_subsets){
 }
 
 ### COCA & iCluster ###
-ari_coca <- ari_icluster <- rep(NA, n_subsets)
+ari_coca <- ari_icluster <- ari_all_rbfk <- rep(NA, n_subsets)
 moc <- array(NA, c(dim(data)[1], n_clusters*n_datasets_per_subset))
 
 for(i in 1:n_subsets){
@@ -97,37 +222,47 @@ for(i in 1:n_subsets){
   
   # For iCluster
   data_iCluster <- list()
-  
+
   # Over-write the matrix-of-clusters each time
   count_m <- 0
   count_l <- 0
-  
+
   # Find clusters in each dataset
   for(l in datasets_in_subset){
     count_l <- count_l + 1
-    data_iCluster[[count_l]] <- data[,,l,j] 
-    
+    data_iCluster[[count_l]] <- data[,,l,j]
+
     kmeans_cluster_labels <- kmeans(data[,,l,j], n_clusters)$cluster
-    
+
     # Fill the matrix-of-clusters
     for(m in 1:n_clusters){
       count_m <- count_m + 1
       moc[, count_m] <- (kmeans_cluster_labels == m)*1
     }
   }
-  
+
   # Use COCA to find final clusters
   coca_cluster_labels <- coca(moc, n_clusters)$clusterLabels
-  # Compute ARI 
+  # Compute ARI
   ari_coca[i] <- adjustedRandIndex(cluster_labels, coca_cluster_labels)
-  
+
   # Use iCluster to find final clusters
   icluster_labels <- iCluster2(data_iCluster, n_clusters)$clusters
   # Compute ARI
   ari_icluster[i] <- adjustedRandIndex(cluster_labels, icluster_labels)
 
+  ### Kernel k-means with RBF kernel ###
+  rbfk_cluster_labels <- lmkkmeans(CM_rbfk[,,datasets_in_subset],
+                                   parameters)$clustering
+  cat("datasets_in_subset", datasets_in_subset, "\n")
+  cat("dim Km", dim(CM_rbfk[,,datasets_in_subset]), "\n")
+  ari_all_rbfk[i] <- adjustedRandIndex(rbfk_cluster_labels, cluster_labels)
+  cat("ari_all_rbfk", ari_all_rbfk, "\n")
+
 }
 
 ### Save results ###
-save(ari_one, ari_all, weights, ari_coca, ari_icluster,
-     file = paste0("../results/ari-b-", j,".RData"))
+save(ari_one, ari_one_rbfk,
+     ari_all, ari_coca, ari_icluster, ari_all_rbfk,
+     weights,
+     file = paste0("../results/ari-b-", j,"-RBFsigma", RBFsigma,".RData"))

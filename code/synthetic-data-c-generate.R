@@ -34,7 +34,7 @@ data <- array(NA, c(N, P, n_types, n_experiments))
 
 Sigma <- diag(n_variables)
 
-i = 3 # Medium separation level
+i = 8 # Medium separation level
 for(j in 1:n_experiments){
   mu = rep(NA, N)
   for(t in 1:(n_types-1)){
@@ -70,7 +70,8 @@ ggpairs(data=example6_dataframe, # data.frame with variables
         title="6 clusters",  # title of the plot
         mapping=ggplot2::aes(colour = cluster),
         lower=list(combo=wrap("facethist", binwidth=0.8)))
-ggsave("../figures/synthetic-data-c1.pdf", width = 7, height = 7)
+ggsave("../figures/synthetic-data-c1.jpg",
+       device = "jpeg", width = 7, height = 7)
 
 t = 2 # 3 clusters
 dataset_example <- data[,,t,1]
@@ -80,7 +81,8 @@ ggpairs(data=example3_dataframe, # data.frame with variables
         title="3 clusters", # title of the plot
         mapping = ggplot2::aes(colour= cluster),
         lower=list(combo=wrap("facethist", binwidth=0.8)))
-ggsave("../figures/synthetic-data-c2.pdf", width = 7, height = 7)
+ggsave("../figures/synthetic-data-c2.jpg",
+       device = "jpeg", width = 7, height = 7)
 
 t = 3 # 6 clusters, well separated
 dataset_example <- data[,,t,1]
@@ -90,6 +92,7 @@ ggpairs(data=example6plus_dataframe, # data.frame with variables
         title="6 clusters, well separated", # title of the plot
         mapping = ggplot2::aes(colour= cluster),
         lower=list(combo=wrap("facethist", binwidth=0.8)))
-ggsave("../figures/synthetic-data-c3.pdf", width = 7, height = 7)
+ggsave("../figures/synthetic-data-c3.jpg",
+       device = "jpeg", width = 7, height = 7)
 
 save(data, file = "../data/synthetic-data-c.RData")

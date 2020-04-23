@@ -25,7 +25,7 @@ P <- n_variables
 data <- array(NA, c(N, P, n_datasets_same_rho, n_experiments))
 
 # Same separation level for all datasets
-separation_level <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID")) 
+separation_level <- 5# as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID")) 
 
 set.seed(151)
 

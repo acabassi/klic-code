@@ -44,8 +44,9 @@ ari.m$Datasets <- factor(ari.m$Datasets,
                        levels = c("3","6", "6*", "3+6", "3+6*"), ordered = TRUE)
 
 ggplot(data = ari.m, aes(x=Datasets, y=ARI)) +
-  geom_boxplot() + ylim(0,1) + my_theme
-ggsave("../figures/ari-c.pdf", width = 15, height = 10, units = "cm")
+  geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_theme
+ggsave("../figures/ari-c.jpg",
+       device = "jpeg", width = 15, height = 10, units = "cm")
 
 dim(weights)
  
@@ -64,8 +65,8 @@ weights_1.m$Dataset <- factor(weights_1.m$Dataset,
 
 
 ggplot(data = weights_1.m, aes(x=Dataset, y=Weight)) +
-  geom_boxplot() + ylim(0,1) + my_theme
-ggsave("../figures/weights-c1.pdf",
+  geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_theme
+ggsave("../figures/weights-c1.jpg", device = "jpeg",
        width = 6, height = 10, units = "cm")
 
 weights_2.m <- melt(t(weights_2))
@@ -73,6 +74,6 @@ head(weights_2.m)
 colnames(weights_2.m) <- c("Experiments", "Dataset", "Weight")
 
 ggplot(data = weights_2.m, aes(x=Dataset, y=Weight)) +
-  geom_boxplot() + ylim(0,1) + my_theme
-ggsave("weights-c2.pdf",
+  geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_theme
+ggsave("../figures/weights-c2.jpg", device = "jpeg",
        width = 6, height = 10, units = "cm")

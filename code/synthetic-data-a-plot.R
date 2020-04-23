@@ -25,9 +25,11 @@ n_experiments <- 100
 all_ari_one <- all_weights <- matrix(NA, 4, n_experiments)
 all_ari_all <- all_ari_coca <- rep(NA, n_experiments)
 
+separation_level <- 1 # Must be an integer between 1 and 10
+
 ###  Load results ###
 for(j in 1:n_experiments){
-  load(paste0("../results/ari-a-", j,".RData"))
+  load(paste0("../results/ari-a-", j,"-sep-", separation_level,".RData"))
   all_ari_one[,j] <- ari_one 
   all_weights[,j] <- weights
   all_ari_all[j] <- ari_all
@@ -51,7 +53,8 @@ ari.m$Datasets <- factor(ari.m$Datasets,
 
 ggplot(data = ari.m, aes(x=Datasets, y=ARI)) +
   geom_boxplot() + ylim(0,1) + my_theme
-ggsave("../figures/ari-a.pdf", width = 15, height = 10, units = "cm")
+ggsave("../figures/ari-a.jpg", device = "jpeg", width = 15, height = 10,
+       units = "cm")
 
 # Plot weights
 
@@ -62,7 +65,8 @@ head(weights.m)
 colnames(weights.m) <- c("Experiment", "Dataset", "Weight")
 ggplot(data = weights.m, aes(x=Dataset, y=Weight)) + 
   geom_boxplot() + ylim(0,1) + my_theme
-ggsave("../figures/weights-a.pdf", width = 12, height = 10, units = "cm")
+ggsave("../figures/weights-a.jpg", device = "jpeg", width = 12, height = 10,
+       units = "cm")
 
 # Plot comparison
 
@@ -74,4 +78,5 @@ colnames(ari_comparison.m) <- c("Experiment", "Method", "ARI")
 
 ggplot(data = ari_comparison.m, aes(x=Method, y=ARI)) +
   geom_boxplot() + ylim(0,1) + my_theme
-ggsave("../figures/coca-a.pdf", width = 6, height = 10, units = "cm")
+ggsave("../figures/coca-a.jpg", device = "jpeg", width = 6, height = 10,
+       units = "cm")

@@ -39,7 +39,8 @@ load("../data/synthetic-data-b.RData")
 ari_one <- ari_one_rbfk <-rep(NA, n_separation_levels)
 
 # Initialise parameters for kernel k-means
-RBFsigma <- 5
+args <- commandArgs(trailingOnly=TRUE)
+RBFsigma <- as.integer(args[1]):
 parameters <- list()
 parameters$cluster_count <- n_clusters
 parameters$iteration_count <- 100
@@ -64,117 +65,6 @@ for(i in 1:n_separation_levels){
     # Compute ARI
     ari_one[i] <- adjustedRandIndex(kkmeans_labels, cluster_labels)
     ari_one_rbfk[i] <- adjustedRandIndex(kkmeans_labels_rbfk, cluster_labels)
-}
-
-if(j==1){
-  library(ComplexHeatmap)
-  library(circlize)
-  col_fun = colorRamp2(c(0, 1), c("white","#003C71")) # Dark blue
-  label_colors <- c("#6CACE4", # Light blue
-                    "#E89CAE", # Light pink
-                    "#F1BE48", # Light yellow
-                    "#B7BF10", # Light green
-                    "#85b09A", # Light cambridge blue
-                    "#0072ce") # Core blue
-  names(label_colors) <- as.character(1:n_clusters)
-  row_annotation <- rowAnnotation(Label = as.character(cluster_labels),
-                                 col = list(Label = label_colors),
-                                 show_legend = FALSE,
-                                 show_annotation_name = FALSE,
-                                 annotation_width = unit(0.1, "cm"))
-  
-    H1 <- Heatmap(CM_cc[,,1],
-          col = col_fun,
-          cluster_rows = FALSE,
-          cluster_columns = FALSE,
-          show_heatmap_legend = FALSE,
-          show_row_names = FALSE,
-          show_column_names = FALSE,
-          heatmap_width = unit(5, "cm"),
-          heatmap_height = unit(5, "cm"),
-          right_annotation = row_annotation)
-    H2 <- Heatmap(CM_cc[,,2],
-                 col = col_fun,
-                 cluster_rows = FALSE,
-                 cluster_columns = FALSE,
-                 show_heatmap_legend = FALSE,
-                 show_row_names = FALSE,
-                 show_column_names = FALSE,
-                 heatmap_width = unit(5, "cm"),
-                 heatmap_height = unit(5, "cm"),
-                 right_annotation = row_annotation)
-    H3 <- Heatmap(CM_cc[,,3],
-                 col = col_fun,
-                 cluster_rows = FALSE,
-                 cluster_columns = FALSE,
-                 show_heatmap_legend = FALSE,
-                 show_row_names = FALSE,
-                 show_column_names = FALSE,
-                 heatmap_width = unit(5, "cm"),
-                 heatmap_height = unit(5, "cm"),
-                 right_annotation = row_annotation)
-    H4 <- Heatmap(CM_cc[,,4],
-                 col = col_fun,
-                 cluster_rows = FALSE,
-                 cluster_columns = FALSE,
-                 show_heatmap_legend = TRUE,
-                 show_row_names = FALSE,
-                 show_column_names = FALSE,
-                 heatmap_width = unit(5, "cm"),
-                 heatmap_height = unit(5, "cm"),
-                 right_annotation = row_annotation,
-                 heatmap_legend_param = list(title = ""))
-  
-    jpeg("../figures/heatmap-b.jpg",
-         height = 5.5, width = 23, units = "cm", res = 1200)
-    H1 + H2 + H3 + H4
-    dev.off()
-    
-    H1_RBF <- Heatmap(CM_rbfk[,,1],
-                  col = col_fun,
-                  cluster_rows = FALSE,
-                  cluster_columns = FALSE,
-                  show_heatmap_legend = FALSE,
-                  show_row_names = FALSE,
-                  show_column_names = FALSE,
-                  heatmap_width = unit(5, "cm"),
-                  heatmap_height = unit(5, "cm"),
-                  right_annotation = row_annotation)
-    H2_RBF <- Heatmap(CM_rbfk[,,2],
-                      col = col_fun,
-                      cluster_rows = FALSE,
-                      cluster_columns = FALSE,
-                      show_heatmap_legend = FALSE,
-                      show_row_names = FALSE,
-                      show_column_names = FALSE,
-                      heatmap_width = unit(5, "cm"),
-                      heatmap_height = unit(5, "cm"),
-                      right_annotation = row_annotation)
-    H3_RBF <- Heatmap(CM_rbfk[,,3],
-                      col = col_fun,
-                      cluster_rows = FALSE,
-                      cluster_columns = FALSE,
-                      show_heatmap_legend = FALSE,
-                      show_row_names = FALSE,
-                      show_column_names = FALSE,
-                      heatmap_width = unit(5, "cm"),
-                      heatmap_height = unit(5, "cm"),
-                      right_annotation = row_annotation)
-    H4_RBF <- Heatmap(CM_rbfk[,,4],
-                      col = col_fun,
-                      cluster_rows = FALSE,
-                      cluster_columns = FALSE,
-                      show_heatmap_legend = TRUE,
-                      show_row_names = FALSE,
-                      show_column_names = FALSE,
-                      heatmap_width = unit(5, "cm"),
-                      heatmap_height = unit(5, "cm"),
-                      right_annotation = row_annotation,
-                      heatmap_legend_param = list(title = ""))
-    jpeg(paste0("../figures/heatmap-b-rbf-sigma", RBFsigma,".jpg"),
-         height = 5.5, width = 23, units = "cm", res = 1200)
-    H1_RBF + H2_RBF + H3_RBF + H4_RBF
-    dev.off()
 }
 
 ### Combining subsets of three datasets ###
@@ -254,11 +144,7 @@ for(i in 1:n_subsets){
   ### Kernel k-means with RBF kernel ###
   rbfk_cluster_labels <- lmkkmeans(CM_rbfk[,,datasets_in_subset],
                                    parameters)$clustering
-  cat("datasets_in_subset", datasets_in_subset, "\n")
-  cat("dim Km", dim(CM_rbfk[,,datasets_in_subset]), "\n")
   ari_all_rbfk[i] <- adjustedRandIndex(rbfk_cluster_labels, cluster_labels)
-  cat("ari_all_rbfk", ari_all_rbfk, "\n")
-
 }
 
 ### Save results ###
@@ -266,3 +152,115 @@ save(ari_one, ari_one_rbfk,
      ari_all, ari_coca, ari_icluster, ari_all_rbfk,
      weights,
      file = paste0("../results/ari-b-", j,"-RBFsigma", RBFsigma,".RData"))
+
+### Plot kernels for paper ###
+if(j==1){
+  library(ComplexHeatmap)
+  library(circlize)
+  col_fun = colorRamp2(c(0, 1), c("white","#003C71")) # Dark blue
+  label_colors <- c("#6CACE4", # Light blue
+                    "#E89CAE", # Light pink
+                    "#F1BE48", # Light yellow
+                    "#B7BF10", # Light green
+                    "#85b09A", # Light cambridge blue
+                    "#0072ce") # Core blue
+  names(label_colors) <- as.character(1:n_clusters)
+  row_annotation <- rowAnnotation(Label = as.character(cluster_labels),
+                                 col = list(Label = label_colors),
+                                 show_legend = FALSE,
+                                 show_annotation_name = FALSE,
+                                 annotation_width = unit(0.1, "cm"))
+
+    H1 <- Heatmap(CM_cc[,,1],
+          col = col_fun,
+          cluster_rows = FALSE,
+          cluster_columns = FALSE,
+          show_heatmap_legend = FALSE,
+          show_row_names = FALSE,
+          show_column_names = FALSE,
+          heatmap_width = unit(5, "cm"),
+          heatmap_height = unit(5, "cm"),
+          right_annotation = row_annotation)
+    H2 <- Heatmap(CM_cc[,,2],
+                 col = col_fun,
+                 cluster_rows = FALSE,
+                 cluster_columns = FALSE,
+                 show_heatmap_legend = FALSE,
+                 show_row_names = FALSE,
+                 show_column_names = FALSE,
+                 heatmap_width = unit(5, "cm"),
+                 heatmap_height = unit(5, "cm"),
+                 right_annotation = row_annotation)
+    H3 <- Heatmap(CM_cc[,,3],
+                 col = col_fun,
+                 cluster_rows = FALSE,
+                 cluster_columns = FALSE,
+                 show_heatmap_legend = FALSE,
+                 show_row_names = FALSE,
+                 show_column_names = FALSE,
+                 heatmap_width = unit(5, "cm"),
+                 heatmap_height = unit(5, "cm"),
+                 right_annotation = row_annotation)
+    H4 <- Heatmap(CM_cc[,,4],
+                 col = col_fun,
+                 cluster_rows = FALSE,
+                 cluster_columns = FALSE,
+                 show_heatmap_legend = TRUE,
+                 show_row_names = FALSE,
+                 show_column_names = FALSE,
+                 heatmap_width = unit(5, "cm"),
+                 heatmap_height = unit(5, "cm"),
+                 right_annotation = row_annotation,
+                 heatmap_legend_param = list(title = ""))
+
+    jpeg("../figures/heatmap-b.jpg",
+         height = 5.5, width = 23, units = "cm", res = 1200)
+    H1 + H2 + H3 + H4
+    dev.off()
+
+    H1_RBF <- Heatmap(CM_rbfk[,,1],
+                  col = col_fun,
+                  cluster_rows = FALSE,
+                  cluster_columns = FALSE,
+                  show_heatmap_legend = FALSE,
+                  show_row_names = FALSE,
+                  show_column_names = FALSE,
+                  heatmap_width = unit(5, "cm"),
+                  heatmap_height = unit(5, "cm"),
+                  right_annotation = row_annotation)
+    H2_RBF <- Heatmap(CM_rbfk[,,2],
+                      col = col_fun,
+                      cluster_rows = FALSE,
+                      cluster_columns = FALSE,
+                      show_heatmap_legend = FALSE,
+                      show_row_names = FALSE,
+                      show_column_names = FALSE,
+                      heatmap_width = unit(5, "cm"),
+                      heatmap_height = unit(5, "cm"),
+                      right_annotation = row_annotation)
+    H3_RBF <- Heatmap(CM_rbfk[,,3],
+                      col = col_fun,
+                      cluster_rows = FALSE,
+                      cluster_columns = FALSE,
+                      show_heatmap_legend = FALSE,
+                      show_row_names = FALSE,
+                      show_column_names = FALSE,
+                      heatmap_width = unit(5, "cm"),
+                      heatmap_height = unit(5, "cm"),
+                      right_annotation = row_annotation)
+    H4_RBF <- Heatmap(CM_rbfk[,,4],
+                      col = col_fun,
+                      cluster_rows = FALSE,
+                      cluster_columns = FALSE,
+                      show_heatmap_legend = TRUE,
+                      show_row_names = FALSE,
+                      show_column_names = FALSE,
+                      heatmap_width = unit(5, "cm"),
+                      heatmap_height = unit(5, "cm"),
+                      right_annotation = row_annotation,
+                      heatmap_legend_param = list(title = ""))
+    jpeg(paste0("../figures/heatmap-b-rbf-sigma", RBFsigma,".jpg"),
+         height = 5.5, width = 23, units = "cm", res = 1200)
+    H1_RBF + H2_RBF + H3_RBF + H4_RBF
+    dev.off()
+}

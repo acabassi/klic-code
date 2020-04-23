@@ -99,7 +99,7 @@ if(j==1){
        height = 5.5, width = 11.5, units = "cm", res = 1200)
   H1 + H2
   dev.off()
-}
+ }
 
 
 ### Combining subsets of three datasets ###

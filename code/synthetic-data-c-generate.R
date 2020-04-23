@@ -34,7 +34,8 @@ data <- array(NA, c(N, P, n_types, n_experiments))
 
 Sigma <- diag(n_variables)
 
-i = 8 # Medium separation level
+i = 3 # Medium separation level
+# (Change value to 8 just for the illustrative plot in the paper)
 for(j in 1:n_experiments){
   mu = rep(NA, N)
   for(t in 1:(n_types-1)){

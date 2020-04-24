@@ -38,7 +38,7 @@ all_ari_one <- all_ari_one_rbfk <- all_weights <- matrix(NA, 4, n_experiments)
 all_ari_all <- all_ari_coca <- all_ari_icluster <- all_ari_all_rbfk <-
   rep(NA, n_experiments)
 
-separation_level <- 4 # Must be an integer between 1 and 10
+separation_level <- 10 # Must be an integer between 1 and 10
 # In the main paper, we are showing separation_level = 4
 
 ###  Load results ###

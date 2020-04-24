@@ -11,7 +11,8 @@ library(klic)
 library(mclust) # for adjustedRandIndex
 library(rdetools) # for rbfkernel
 
-j <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+# j <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+j <- 1
 
 ### Data generation ### 
 ### B. Six clusters, each dataset has a different level of cluster ###
@@ -39,8 +40,9 @@ load("../data/synthetic-data-b.RData")
 ari_one <- ari_one_rbfk <-rep(NA, n_separation_levels)
 
 # Initialise parameters for kernel k-means
-args <- commandArgs(trailingOnly=TRUE)
-RBFsigma <- as.integer(args[1]):
+# args <- commandArgs(trailingOnly=TRUE)
+# RBFsigma <- as.integer(args[1])
+RBFsigma <- 5
 parameters <- list()
 parameters$cluster_count <- n_clusters
 parameters$iteration_count <- 100
@@ -79,7 +81,7 @@ subsets <- rbind(c(1,2,3),c(1,2,4),c(1,3,4),c(2,3,4))
 
 data_for_klic <- list()
 for(i in 1:n_subsets){
-  
+
   # Build list of datasets, input for KLIC
   count_m <- 0
   datasets_in_subset <- subsets[i,]
@@ -87,18 +89,18 @@ for(i in 1:n_subsets){
     count_m <- count_m + 1
     data_for_klic[[count_m]] <- data[,,l,j]
   }
-  
+
   # Run KLIC
   klicOutput <- klic(data_for_klic, n_datasets_per_subset,
                      individualK = rep(n_clusters, n_datasets_per_subset),
                      globalK = n_clusters)
-  
+
   # Extract cluster labels and weights
   klic_labels <- klicOutput$globalClusterLabels
   weights[,i] <- colMeans(klicOutput$weights)
-  
-  # Compute ARI 
-  ari_all[i] <- adjustedRandIndex(klic_labels, cluster_labels) 
+
+  # Compute ARI
+  ari_all[i] <- adjustedRandIndex(klic_labels, cluster_labels)
 }
 
 ### COCA & iCluster ###
@@ -106,10 +108,10 @@ ari_coca <- ari_icluster <- ari_all_rbfk <- rep(NA, n_subsets)
 moc <- array(NA, c(dim(data)[1], n_clusters*n_datasets_per_subset))
 
 for(i in 1:n_subsets){
-  
-  # Select datasets 
+
+  # Select datasets
   datasets_in_subset <- subsets[i,]
-  
+
   # For iCluster
   data_iCluster <- list()
 
@@ -154,7 +156,7 @@ save(ari_one, ari_one_rbfk,
      file = paste0("../results/ari-b-", j,"-RBFsigma", RBFsigma,".RData"))
 
 ### Plot kernels for paper ###
-if(j==1){
+# if(j==1){
   library(ComplexHeatmap)
   library(circlize)
   col_fun = colorRamp2(c(0, 1), c("white","#003C71")) # Dark blue
@@ -213,10 +215,10 @@ if(j==1){
                  right_annotation = row_annotation,
                  heatmap_legend_param = list(title = ""))
 
-    jpeg("../figures/heatmap-b.jpg",
-         height = 5.5, width = 23, units = "cm", res = 1200)
-    H1 + H2 + H3 + H4
-    dev.off()
+jpeg("../figures/heatmap-b.jpg",
+     height = 5.5, width = 23, units = "cm", res = 1200)
+  H1 + H2 + H3 + H4
+dev.off()
 
     H1_RBF <- Heatmap(CM_rbfk[,,1],
                   col = col_fun,
@@ -261,6 +263,6 @@ if(j==1){
                       heatmap_legend_param = list(title = ""))
     jpeg(paste0("../figures/heatmap-b-rbf-sigma", RBFsigma,".jpg"),
          height = 5.5, width = 23, units = "cm", res = 1200)
-    H1_RBF + H2_RBF + H3_RBF + H4_RBF
+      H1_RBF + H2_RBF + H3_RBF + H4_RBF
     dev.off()
-}
+# }

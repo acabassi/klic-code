@@ -9,6 +9,8 @@ library(ggplot2)
 library(reshape)
 library(reshape2)
 
+RBFsigma <- 5
+
 # Define ggplot2 theme 
 my_basic_theme <-  theme(
     panel.background = element_rect(fill = NA),
@@ -41,7 +43,7 @@ all_ari_all <- all_ari_coca <- all_ari_one <- all_ari_one_rbfk <-
 
 # Load results
 for(j in 1:n_experiments){
-  load(paste0("../results/ari-b-", j,".RData"))
+  load(paste0("../results/ari-b-", j,"-RBFsigma", RBFsigma,".RData"))
   all_weights[,,j] <- weights
   all_ari_all[,j] <- ari_all
   all_ari_coca[,j] <- ari_coca
@@ -67,8 +69,8 @@ ari.m$Dataset <- factor(ari.m$Dataset,
 ggplot(data = ari.m, aes(x=Dataset, y=ARI)) + geom_boxplot(outlier.size = 0.3) +
   ylim(0,1) +
   my_basic_theme
-ggsave("../figures/ari-b.jpg", device = "jpeg", width = 15, height = 10,
-       units = "cm")
+# ggsave("../figures/ari-b.jpg", device = "jpeg", width = 15, height = 10,
+#        units = "cm")
 
 ### Same thing but with RBF kernel ###
 ari <- cbind(t(all_ari_one_rbfk), t(all_ari_all_rbfk))
@@ -84,8 +86,8 @@ ari.m$Dataset <- factor(ari.m$Dataset,
 
 ggplot(data = ari.m, aes(x=Dataset, y=ARI)) + geom_boxplot(outlier.size = 0.3) +
   ylim(0,1) + my_basic_theme
-ggsave("../figures/ari-b-rbf.jpg", device = "jpeg", width = 15, height = 10,
-       units = "cm")
+# ggsave("../figures/ari-b-rbf.jpg", device = "jpeg", width = 15, height = 10,
+#        units = "cm")
 
 dimnames(all_weights) <- list(c("1st", "2nd", "3rd"), c("0+1+2", "0+1+3",
                                                         "0+2+3", "1+2+3"),
@@ -101,8 +103,8 @@ colnames(weights.m) <- c("Dataset", "Combination", "Experiment", "Weight")
 ggplot(data = weights.m, aes(x=Dataset, y=Weight)) +
   geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_basic_theme +
   facet_grid(cols = vars(Combination))
-ggsave("../figures/weights-b.jpg", device = "jpeg", width = 15, height = 11,
-       units = "cm")
+# ggsave("../figures/weights-b.jpg", device = "jpeg", width = 15, height = 11,
+#        units = "cm")
 
 # Plot comparison
 ari_comparison <- array(c(all_ari_all,
@@ -121,5 +123,7 @@ colnames(ari_comparison.m) <- c("Combination", "Experiment", "Method", "ARI")
 ggplot(data = ari_comparison.m, aes(x=Method, y=ARI)) +
   geom_boxplot(outlier.size = 0.35) +
   ylim(0,1) + my_theme_rotated_labels + facet_grid(cols=vars(Combination))
-ggsave("../figures/coca-b.jpg", device = "jpeg", width = 15, height = 10,
+ggsave(paste0("../figures/coca-b-RBFsigma", RBFsigma,".jpg"), device = "jpeg",
+       width = 15, height = 10,
        units = "cm")                           
+

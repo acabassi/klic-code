@@ -6,15 +6,14 @@
 rm(list = ls())
 
 library(coca)
+library(ComplexHeatmap)
 library(iCluster)
 library(klic)
 library(mclust) # for adjustedRandIndex
 library(rdetools) # for rbfkernel
 
-# j <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-j <- 1
+j <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 
-### Data generation ### 
 ### B. Six clusters, each dataset has a different level of cluster ###
 ###    separability ###
 
@@ -40,12 +39,13 @@ load("../data/synthetic-data-b.RData")
 ari_one <- ari_one_rbfk <-rep(NA, n_separation_levels)
 
 # Initialise parameters for kernel k-means
-# args <- commandArgs(trailingOnly=TRUE)
-# RBFsigma <- as.integer(args[1])
-RBFsigma <- 5
 parameters <- list()
 parameters$cluster_count <- n_clusters
 parameters$iteration_count <- 100
+
+# Set parameters for RBF kernels
+RBFsigma <- c(0.001, 0.100, 1.000, 5.000)
+
 CM_rbfk <- CM_cc <- array(NA, c(N, N, n_separation_levels))
 dimnames(CM_rbfk) <- dimnames(CM_cc) <-
   list(as.character(1:N),
@@ -56,7 +56,10 @@ for(i in 1:n_separation_levels){
     # Use consensus clustering to find kernel matrix
     CM_cc_temp <- consensusCluster(data[,,i,j], n_clusters)
     # Use RBF kernel to obtain another kernel matrix
-    CM_rbfk_temp <- rbfkernel(data[,,i,j], sigma = RBFsigma)
+    CM_rbfk_temp <- rbfkernel(data[,,i,j], sigma = RBFsigma[i])
+    # Make sure that it is actually symmetric
+    CM_rbfk_temp[lower.tri(CM_rbfk_temp)] <-
+      t(CM_rbfk_temp)[lower.tri(CM_rbfk_temp)]
     # Shift the eigenvalues of the kernel matrices so that they are positive
     # semi-definite
     CM_cc[,,i] <- spectrumShift(CM_cc_temp)
@@ -80,6 +83,8 @@ weights <- array(NA, c(n_datasets_per_subset, n_subsets))
 subsets <- rbind(c(1,2,3),c(1,2,4),c(1,3,4),c(2,3,4))
 
 data_for_klic <- list()
+weighted_kernel <- list()
+  
 for(i in 1:n_subsets){
 
   # Build list of datasets, input for KLIC
@@ -97,15 +102,26 @@ for(i in 1:n_subsets){
 
   # Extract cluster labels and weights
   klic_labels <- klicOutput$globalClusterLabels
-  weights[,i] <- colMeans(klicOutput$weights)
+  all_weights <- klicOutput$weights
+  weights[,i] <- colMeans(all_weights)
+  
+  weighted_kernel[[i]]<- matrix(0, N, N) 
+  count <- 1
+  for (l in datasets_in_subset) {
+    weighted_kernel[[i]] <- weighted_kernel[[i]] +
+      (all_weights[, count] %*% t(all_weights[, count])) * CM_cc[, , count]
+    count <- count + 1
+  }
 
   # Compute ARI
   ari_all[i] <- adjustedRandIndex(klic_labels, cluster_labels)
 }
 
-### COCA & iCluster ###
+### COCA, iCluster and RBF kernels ###
 ari_coca <- ari_icluster <- ari_all_rbfk <- rep(NA, n_subsets)
 moc <- array(NA, c(dim(data)[1], n_clusters*n_datasets_per_subset))
+
+weighted_kernel_rbfk <- list()
 
 for(i in 1:n_subsets){
 
@@ -144,16 +160,27 @@ for(i in 1:n_subsets){
   ari_icluster[i] <- adjustedRandIndex(cluster_labels, icluster_labels)
 
   ### Kernel k-means with RBF kernel ###
-  rbfk_cluster_labels <- lmkkmeans(CM_rbfk[,,datasets_in_subset],
-                                   parameters)$clustering
+  lmkkmeans_rbfk <- lmkkmeans(CM_rbfk[,,datasets_in_subset], parameters)
+  rbfk_cluster_labels <- lmkkmeans_rbfk$clustering
+  weights_rbfk <- lmkkmeans_rbfk$Theta
   ari_all_rbfk[i] <- adjustedRandIndex(rbfk_cluster_labels, cluster_labels)
+
+  ### Weighted kernels ###
+  
+  weighted_kernel_rbfk[[i]] <- matrix(0, N, N) 
+  count <- 1
+  for (l in datasets_in_subset) {
+    weighted_kernel_rbfk[[i]] <- weighted_kernel_rbfk[[i]] +
+      (weights_rbfk[, count] %*% t(weights_rbfk[, count])) * CM_rbfk[, , count]
+    count <- count + 1
+  }
 }
 
 ### Save results ###
 save(ari_one, ari_one_rbfk,
      ari_all, ari_coca, ari_icluster, ari_all_rbfk,
-     weights,
-     file = paste0("../results/ari-b-", j,"-RBFsigma", RBFsigma,".RData"))
+     weights, weighted_kernel, weighted_kernel_rbfk,
+     file = paste0("../results/ari-b-", j, ".RData"))
 
 ### Plot kernels for paper ###
 # if(j==1){
@@ -219,50 +246,3 @@ jpeg("../figures/heatmap-b.jpg",
      height = 5.5, width = 23, units = "cm", res = 1200)
   H1 + H2 + H3 + H4
 dev.off()
-
-    H1_RBF <- Heatmap(CM_rbfk[,,1],
-                  col = col_fun,
-                  cluster_rows = FALSE,
-                  cluster_columns = FALSE,
-                  show_heatmap_legend = FALSE,
-                  show_row_names = FALSE,
-                  show_column_names = FALSE,
-                  heatmap_width = unit(5, "cm"),
-                  heatmap_height = unit(5, "cm"),
-                  right_annotation = row_annotation)
-    H2_RBF <- Heatmap(CM_rbfk[,,2],
-                      col = col_fun,
-                      cluster_rows = FALSE,
-                      cluster_columns = FALSE,
-                      show_heatmap_legend = FALSE,
-                      show_row_names = FALSE,
-                      show_column_names = FALSE,
-                      heatmap_width = unit(5, "cm"),
-                      heatmap_height = unit(5, "cm"),
-                      right_annotation = row_annotation)
-    H3_RBF <- Heatmap(CM_rbfk[,,3],
-                      col = col_fun,
-                      cluster_rows = FALSE,
-                      cluster_columns = FALSE,
-                      show_heatmap_legend = FALSE,
-                      show_row_names = FALSE,
-                      show_column_names = FALSE,
-                      heatmap_width = unit(5, "cm"),
-                      heatmap_height = unit(5, "cm"),
-                      right_annotation = row_annotation)
-    H4_RBF <- Heatmap(CM_rbfk[,,4],
-                      col = col_fun,
-                      cluster_rows = FALSE,
-                      cluster_columns = FALSE,
-                      show_heatmap_legend = TRUE,
-                      show_row_names = FALSE,
-                      show_column_names = FALSE,
-                      heatmap_width = unit(5, "cm"),
-                      heatmap_height = unit(5, "cm"),
-                      right_annotation = row_annotation,
-                      heatmap_legend_param = list(title = ""))
-    jpeg(paste0("../figures/heatmap-b-rbf-sigma", RBFsigma,".jpg"),
-         height = 5.5, width = 23, units = "cm", res = 1200)
-      H1_RBF + H2_RBF + H3_RBF + H4_RBF
-    dev.off()
-# }

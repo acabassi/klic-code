@@ -33,6 +33,7 @@ cluster_labels <- c(uno, uno*2, uno*3, uno*4, uno*5, uno*6)
 args <- commandArgs(trailingOnly=TRUE)
 separation_level <- as.integer(args[1]) # Same for all datasets
 load(paste0("../data/synthetic-data-a-sep", separation_level,".RData"))
+load("../data/RBF_sigma_values.RData")
 
 ### Clustering one dataset at a time ###
 
@@ -41,21 +42,22 @@ ari_one <- ari_one_rbfk <- rep(NA, n_datasets_same_rho)
 # Initialise parameters for kernel k-means
 parameters <- list()
 parameters$cluster_count <- n_clusters
-CM_rbfk <- array(NA, c(N, N, n_datasets_same_rho))
+CM <- CM_rbfk <- array(NA, c(N, N, n_datasets_same_rho))
 
 for(i in 1:n_datasets_same_rho){
     # Use consensus clustering to find kernel matrix
     CM_temp <- consensusCluster(data[,,i,j], n_clusters)
     # Use RBF kernel to obtain another kernel matrix
-    CM_rbfk_temp <- rbfkernel(data[,,i,j], sigma = 1)
+    CM_rbfk_temp <- rbfkernel(data[,,i,j], sigma = RBF_sigmas[separation_level])
     # Make sure it is REALLY symmetric
-    CM_rbfk_temp[lower.tri(CM_rbfk_temp)] = t(CM_rbfk_temp)[lower.tri(CM_rbfk_temp)]
+    CM_rbfk_temp[lower.tri(CM_rbfk_temp)] <- t(CM_rbfk_temp)[
+      lower.tri(CM_rbfk_temp)]
     # Shift the eigenvalues of the kernel matrices so that they are positive
     # semi-definite
-    CM_temp <- spectrumShift(CM_temp)
+    CM[,,i] <- spectrumShift(CM_temp)
     CM_rbfk[,,i] <- spectrumShift(CM_rbfk_temp)
     # Use kernel k-means to find clusters
-    kkmeans_labels <- kkmeans(CM_temp, parameters)$clustering
+    kkmeans_labels <- kkmeans(CM[,,i], parameters)$clustering
     kkmeans_labels_rbfk <- kkmeans(CM_rbfk[,,i], parameters)$clustering
     # Compute ARI
     ari_one[i] <- adjustedRandIndex(kkmeans_labels, cluster_labels)
@@ -77,7 +79,7 @@ klicOutput <- klic(data_for_klic, n_datasets_same_rho,
 
 # Extract cluster labels and weights
 klic_labels <- klicOutput$globalClusterLabels
-weights <- colMeans(klicOutput$weights)
+weights <- klicOutput$weights
 
 # Compute ARI
 ari_all <- adjustedRandIndex(klic_labels, cluster_labels) 
@@ -122,11 +124,25 @@ ari_icluster <- adjustedRandIndex(cluster_labels, icluster_labels)
 
 ### Kernel k-means with RBF kernel ###
 parameters$iteration_count <- 100
-rbfk_cluster_labels <- lmkkmeans(CM_rbfk, parameters)$clustering
+lmkkmeans_rbfk <- lmkkmeans(CM_rbfk, parameters)
+rbfk_cluster_labels <- lmkkmeans_rbfk$clustering
+weights_rbfk <- lmkkmeans_rbfk$Theta
 ari_all_rbfk <- adjustedRandIndex(rbfk_cluster_labels, cluster_labels)
+
+### Weighted kernels ###
+
+weighted_kernel <- weighted_kernel_rbfk <- matrix(0, N, N) 
+for (i in 1:n_datasets_same_rho) {
+  weighted_kernel <- weighted_kernel +
+    (weights[, i] %*% t(weights[, i])) * CM[, , i]
+  
+  weighted_kernel_rbfk <- weighted_kernel_rbfk +
+    (weights_rbfk[, i] %*% t(weights_rbfk[, i])) * CM_rbfk[, , i]
+}
 
 ### Save results ###
 save(ari_one, ari_one_rbfk,
      ari_all,  ari_coca, ari_icluster, ari_all_rbfk,
-     weights,
+     weights, weights_rbfk,
+     weighted_kernel, weighted_kernel_rbfk,
      file = paste0("../results/ari-a-", j,"-sep-", separation_level,".RData"))

@@ -40,7 +40,7 @@ all_ari_all <- all_ari_coca <- all_ari_icluster <- all_ari_all_rbfk <-
   rep(NA, n_experiments)
 
 
-separation_level <- 4 # This is the only value considered so far
+separation_level <- 10 # From 1 to 10
 
 ###  Load results ###
 for(j in 1:n_experiments){
@@ -48,7 +48,9 @@ for(j in 1:n_experiments){
   all_ari_one[,j] <- ari_one
   all_ari_one_rbfk[,j] <- ari_one_rbfk
   all_weights[,j] <- colMeans(weights)
-  all_weights_rbfk[,j] <- colMeans(weights_rbfk)
+  if(!is.na(weights_rbfk)){
+    all_weights_rbfk[,j] <- colMeans(weights_rbfk)
+  }
   all_ari_all[j] <- ari_all
   all_ari_coca[j] <- ari_coca
   all_ari_icluster[j] <- ari_icluster
@@ -149,7 +151,7 @@ colnames(ari_both_comparisons.m) <- c("Experiment", "Method", "Setting", "ARI")
 ggplot(data = ari_both_comparisons.m, aes(x=Method, y=ARI)) +
   geom_boxplot(outlier.size = 0.35) +
   ylim(0,1) + my_theme_rotated_labels + facet_grid(cols=vars(Setting))
-ggsave(paste0("../figures/coca-d-sep", separation_level,".jpg"),
+ggsave(paste0("../figures/coca-a-and-d-sep", separation_level,".jpg"),
        device = "jpeg",
        width = 8, height = 10,
        units = "cm")    

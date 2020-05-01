@@ -129,7 +129,9 @@ ari_icluster <- adjustedRandIndex(cluster_labels, icluster_labels)
 
 ### Kernel k-means with RBF kernel ###
 parameters$iteration_count <- 100
-lmkkmeans_rbfk <- lmkkmeans(CM_rbfk, parameters)
+lmkkmeans_rbfk <- tryCatch(lmkkmeans(CM_rbfk, parameters),
+                           error = function(err) list(clustering = rep(NA, 300),
+                                                      Theta = NA))
 rbfk_cluster_labels <- lmkkmeans_rbfk$clustering
 weights_rbfk <- lmkkmeans_rbfk$Theta
 ari_all_rbfk <- adjustedRandIndex(rbfk_cluster_labels, cluster_labels)
@@ -141,8 +143,10 @@ for (i in 1:n_datasets_same_rho) {
   weighted_kernel <- weighted_kernel +
     (weights[, i] %*% t(weights[, i])) * CM[, , i]
   
-  weighted_kernel_rbfk <- weighted_kernel_rbfk +
-    (weights_rbfk[, i] %*% t(weights_rbfk[, i])) * CM_rbfk[, , i]
+  if(!is.na(weights_rbfk)){
+    weighted_kernel_rbfk <- weighted_kernel_rbfk +
+      (weights_rbfk[, i] %*% t(weights_rbfk[, i])) * CM_rbfk[, , i]
+  }
 }
 
 ### Save results ###

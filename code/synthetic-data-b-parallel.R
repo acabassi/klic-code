@@ -7,6 +7,7 @@ rm(list = ls())
 
 library(coca)
 library(ComplexHeatmap)
+library(clusternomics)
 library(iCluster)
 library(klic)
 library(mclust) # for adjustedRandIndex
@@ -36,7 +37,7 @@ load("../data/synthetic-data-b.RData")
 
 ### Clustering one dataset at a time ###
 
-ari_one <- ari_one_rbfk <-rep(NA, n_separation_levels)
+ari_one <- ari_one_rbfk <- ari_one_rbfk_fixed <- rep(NA, n_separation_levels)
 
 # Initialise parameters for kernel k-means
 parameters <- list()
@@ -46,7 +47,7 @@ parameters$iteration_count <- 100
 # Set parameters for RBF kernels
 RBFsigma <- c(0.001, 0.100, 1.000, 5.000)
 
-CM_rbfk <- CM_cc <- array(NA, c(N, N, n_separation_levels))
+CM_rbfk <- CM_cc <- CM_rbfk_fixed <- array(NA, c(N, N, n_separation_levels))
 dimnames(CM_rbfk) <- dimnames(CM_cc) <-
   list(as.character(1:N),
        as.character(1:N),
@@ -57,19 +58,31 @@ for(i in 1:n_separation_levels){
     CM_cc_temp <- consensusCluster(data[,,i,j], n_clusters)
     # Use RBF kernel to obtain another kernel matrix
     CM_rbfk_temp <- rbfkernel(data[,,i,j], sigma = RBFsigma[i])
+    CM_rbfk_fixed_temp <- rbfkernel(data[,,i,j], sigma = 1)
     # Make sure that it is actually symmetric
     CM_rbfk_temp[lower.tri(CM_rbfk_temp)] <-
       t(CM_rbfk_temp)[lower.tri(CM_rbfk_temp)]
+    CM_rbfk_fixed_temp[lower.tri(CM_rbfk_fixed_temp)] <-
+      t(CM_rbfk_fixed_temp)[lower.tri(CM_rbfk_fixed_temp)]
     # Shift the eigenvalues of the kernel matrices so that they are positive
     # semi-definite
     CM_cc[,,i] <- spectrumShift(CM_cc_temp)
     CM_rbfk[,,i] <- spectrumShift(CM_rbfk_temp)
+    CM_rbfk_fixed[,,i] <- spectrumShift(CM_rbfk_fixed_temp)
     # Use kernel k-means to find clusters
-    kkmeans_labels <- kkmeans(CM_cc[,,i], parameters)$clustering
-    kkmeans_labels_rbfk <- kkmeans(CM_rbfk[,,i], parameters)$clustering
+    kkmeans_labels <-
+      kkmeans(CM_cc[,,i], parameters)$clustering
+    kkmeans_labels_rbfk <-
+      kkmeans(CM_rbfk[,,i], parameters)$clustering
+    kkmeans_labels_rbfk_fixed <-
+      kkmeans(CM_rbfk_fixed[,,i], parameters)$clustering
     # Compute ARI
-    ari_one[i] <- adjustedRandIndex(kkmeans_labels, cluster_labels)
-    ari_one_rbfk[i] <- adjustedRandIndex(kkmeans_labels_rbfk, cluster_labels)
+    ari_one[i] <-
+      adjustedRandIndex(kkmeans_labels, cluster_labels)
+    ari_one_rbfk[i] <-
+      adjustedRandIndex(kkmeans_labels_rbfk, cluster_labels)
+    ari_one_rbfk_fixed[i] <-
+      adjustedRandIndex(kkmeans_labels_rbfk_fixed, cluster_labels)
 }
 
 ### Combining subsets of three datasets ###
@@ -118,10 +131,11 @@ for(i in 1:n_subsets){
 }
 
 ### COCA, iCluster and RBF kernels ###
-ari_coca <- ari_icluster <- ari_all_rbfk <- rep(NA, n_subsets)
+ari_coca <- ari_icluster <- ari_all_rbfk <- ari_all_rbfk_fixed <- 
+  ari_clusternomics <- rep(NA, n_subsets)
 moc <- array(NA, c(dim(data)[1], n_clusters*n_datasets_per_subset))
 
-weighted_kernel_rbfk <- list()
+weighted_kernel_rbfk <- weighted_kernel_rbfk_fixed <- list()
 
 for(i in 1:n_subsets){
 
@@ -155,31 +169,51 @@ for(i in 1:n_subsets){
   ari_coca[i] <- adjustedRandIndex(cluster_labels, coca_cluster_labels)
 
   # Use iCluster to find final clusters
-  icluster_labels <- iCluster2(data_iCluster, n_clusters)$clusters
+  icluster_labels  <- iCluster::tune.iCluster2(data_iCluster, n_clusters,
+                                               n.lambda = 35)$best.fit$clusters
   # Compute ARI
   ari_icluster[i] <- adjustedRandIndex(cluster_labels, icluster_labels)
-
+  
+  # Use clusternomics to find the final clusters
+  cluster_counts_clusternomics <- list(global = n_clusters,
+                                       context = rep(n_clusters,
+                                                     n_datasets_per_subset))
+  clusternomics <- contextCluster(data_iCluster,
+                                  clusterCounts = cluster_counts_clusternomics,
+                                  verbose = TRUE)
+  clusternomics_labels <-
+    clusternomics$samples[[length(clusternomics$samples)]]$Global
+  ari_clusternomics[i] <- adjustedRandIndex(clusternomics_labels, cluster_labels)
+  
   ### Kernel k-means with RBF kernel ###
   lmkkmeans_rbfk <- lmkkmeans(CM_rbfk[,,datasets_in_subset], parameters)
   rbfk_cluster_labels <- lmkkmeans_rbfk$clustering
   weights_rbfk <- lmkkmeans_rbfk$Theta
   ari_all_rbfk[i] <- adjustedRandIndex(rbfk_cluster_labels, cluster_labels)
+  lmkkmeans_rbfk_fixed <- lmkkmeans(CM_rbfk_fixed[,,datasets_in_subset], parameters)
+  rbfk_cluster_labels_fixed <- lmkkmeans_rbfk_fixed$clustering
+  weights_rbfk_fixed <- lmkkmeans_rbfk_fixed$Theta
+  ari_all_rbfk_fixed[i] <- adjustedRandIndex(rbfk_cluster_labels_fixed, cluster_labels)
 
   ### Weighted kernels ###
   
-  weighted_kernel_rbfk[[i]] <- matrix(0, N, N) 
+  weighted_kernel_rbfk[[i]] <- weighted_kernel_rbfk_fixed[[i]] <- matrix(0, N, N)
   count <- 1
   for (l in datasets_in_subset) {
     weighted_kernel_rbfk[[i]] <- weighted_kernel_rbfk[[i]] +
       (weights_rbfk[, count] %*% t(weights_rbfk[, count])) * CM_rbfk[, , count]
+    weighted_kernel_rbfk_fixed[[i]] <- weighted_kernel_rbfk_fixed[[i]] +
+      (weights_rbfk_fixed[, count] %*% t(weights_rbfk_fixed[, count])) *
+      CM_rbfk_fixed[, , count]
     count <- count + 1
   }
 }
 
 ### Save results ###
-save(ari_one, ari_one_rbfk,
-     ari_all, ari_coca, ari_icluster, ari_all_rbfk,
-     weights, weighted_kernel, weighted_kernel_rbfk,
+save(ari_one, ari_one_rbfk, ari_one_rbfk_fixed,
+     ari_all, ari_coca, ari_icluster, ari_all_rbfk, ari_all_rbfk_fixed,
+     ari_clusternomics,
+     weights, weighted_kernel, weighted_kernel_rbfk, weighted_kernel_rbfk_fixed,
      file = paste0("../results/ari-b-", j, ".RData"))
 
 ### Plot kernels for paper ###

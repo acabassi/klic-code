@@ -5,6 +5,9 @@
 # Session Data files
 .RData
 
+# Results
+results/*
+
 # Example code in package build process
 *-Ex.R
 

@@ -51,7 +51,7 @@ for(i in 1:n_datasets_same_rho){
     # Use RBF kernel to obtain another kernel matrix
     CM_rbfk_temp <- rbfkernel(data[,,i,j], sigma = RBF_sigmas[separation_level])
     CM_rbfk_fixed_temp <- rbfkernel(data[,,i,j], sigma = 1)
-    # Make sure it is REALLY symmetric
+    # Make sure it is actually symmetric
     CM_rbfk_temp[lower.tri(CM_rbfk_temp)] <- t(CM_rbfk_temp)[
       lower.tri(CM_rbfk_temp)]
     CM_rbfk_fixed_temp[lower.tri(CM_rbfk_fixed_temp)] <- t(CM_rbfk_fixed_temp)[
@@ -88,7 +88,8 @@ for(i in 1:n_datasets_same_rho){
 # Run KLIC
 klicOutput <- tryCatch(klic(data_for_klic, n_datasets_same_rho,
                        individualK = rep(n_clusters, n_datasets_same_rho),
-                       globalK = n_clusters),
+                       globalK = n_clusters,
+                       C = 1000),
                        error = function(err)
                          list(globalClusterLabels = rep(NA, 300),
                               weights = NA))
@@ -155,18 +156,26 @@ cluster_counts_clusternomics <- list(global = n_clusters,
 clusternomics <- contextCluster(data_iCluster,
                                 clusterCounts = cluster_counts_clusternomics,
                                 verbose = TRUE)
-clusternomics_labels <-
-  clusternomics$samples[[length(clusternomics$samples)]]$Global
+samples <- clusternomics$samples
+clusters <- plyr::laply(1:length(samples), function(i) samples[[i]]$Global)
+coclust <- coclusteringMatrix(clusters)
+diag(coclust) <- 1
+fit <- hclust(as.dist(1 - coclust))
+clusternomics_labels <- cutree(fit, k=n_clusters)
 ari_clusternomics <- adjustedRandIndex(clusternomics_labels, cluster_labels)
 
 ### Kernel k-means with RBF kernel ###
 parameters$iteration_count <- 1000
-lmkkmeans_rbfk <- lmkkmeans(CM_rbfk, parameters)
+lmkkmeans_rbfk <- tryCatch(lmkkmeans(CM_rbfk, parameters),
+                           error = function(err) list(clustering = rep(NA, 300),
+                                                      Theta = NA))
 rbfk_cluster_labels <- lmkkmeans_rbfk$clustering
 weights_rbfk <- lmkkmeans_rbfk$Theta
 ari_all_rbfk <- adjustedRandIndex(rbfk_cluster_labels, cluster_labels)
 
-lmkkmeans_rbfk_fixed <- lmkkmeans(CM_rbfk_fixed, parameters)
+lmkkmeans_rbfk_fixed <-
+  tryCatch(lmkkmeans(CM_rbfk_fixed, parameters),
+           error = function(err) list(clustering = rep(NA, 300), Theta = NA))
 rbfk_cluster_labels_fixed <- lmkkmeans_rbfk_fixed$clustering
 weights_rbfk_fixed <- lmkkmeans_rbfk_fixed$Theta
 ari_all_rbfk_fixed <- 
@@ -183,12 +192,16 @@ for (i in 1:n_datasets_same_rho) {
       (weights[, i] %*% t(weights[, i])) * CM[, , i]
   }
   
+  if(!is.na(weights_rbfk)){
   weighted_kernel_rbfk <- weighted_kernel_rbfk +
     (weights_rbfk[, i] %*% t(weights_rbfk[, i])) * CM_rbfk[, , i]
+  }
   
+  if(!is.na(weights_rbfk_fixed)){
   weighted_kernel_rbfk_fixed <- weighted_kernel_rbfk_fixed +
     (weights_rbfk_fixed[, i] %*% t(weights_rbfk_fixed[, i])) *
     CM_rbfk_fixed[, , i]
+  }
 }
 
 ### Save results ###

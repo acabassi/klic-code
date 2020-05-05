@@ -9,7 +9,6 @@ library(ggplot2)
 library(reshape)
 library(reshape2)
 
-RBFsigma <- 5
 
 # Define ggplot2 theme 
 my_basic_theme <-  theme(
@@ -39,20 +38,25 @@ n_experiments <- 100
 
 all_weights <- array(NA, c(3, 4, n_experiments))
 all_ari_all <- all_ari_coca <- all_ari_one <- all_ari_one_rbfk <-
-  all_ari_icluster <- all_ari_all_rbfk <- matrix(NA, 4, n_experiments)
+  all_ari_one_rbfk_fixed <- all_ari_icluster <- all_ari_clusternomics <-
+  all_ari_all_rbfk <- all_ari_all_rbfk_fixed <- matrix(NA, 4, n_experiments)
 
 # Load results
 for(j in 1:n_experiments){
-  load(paste0("../results/ari-b-", j,"-RBFsigma", RBFsigma,".RData"))
-  all_weights[,,j] <- weights
+  load(paste0("../results/ari-b-", j,".RData"))
+  if(!is.na(weights)){
+    all_weights[,,j] <- weights
+  }
   all_ari_all[,j] <- ari_all
   all_ari_coca[,j] <- ari_coca
   all_ari_one[,j] <- ari_one
   all_ari_icluster[,j] <- ari_icluster
+  all_ari_clusternomics[,j] <- ari_clusternomics
   all_ari_all_rbfk[,j] <- ari_all_rbfk
+  all_ari_all_rbfk_fixed[,j] <- ari_all_rbfk_fixed
   all_ari_one_rbfk[,j] <- ari_one_rbfk
+  all_ari_one_rbfk_fixed[,j] <- ari_one_rbfk_fixed
 }
-
 
 ### Plot ARI of KLIC: individual + groups ###
 ari <- cbind(t(all_ari_one), t(all_ari_all))
@@ -109,12 +113,15 @@ ggplot(data = weights.m, aes(x=Dataset, y=Weight)) +
 # Plot comparison
 ari_comparison <- array(c(all_ari_all,
                           all_ari_coca,
+                          all_ari_all_rbfk,
+                          all_ari_all_rbfk_fixed,
                           all_ari_icluster,
-                          all_ari_all_rbfk),
-                        dim = c(4, n_experiments, 4))
+                          all_ari_clusternomics),
+                        dim = c(4, n_experiments, 6))
 dimnames(ari_comparison) <- list(c("0+1+2", "0+1+3", "0+2+3", "1+2+3"),
                                  1:n_experiments,
-                                 c("KLIC", "COCA", "iCluster", "RBF"))
+                                 c("KLIC", "COCA", "RBF opt.", "RBF fixed",
+                                   "iCluster", "Clusternomics"))
 ari_comparison.m <- melt(ari_comparison)
 
 head(ari_comparison.m)
@@ -123,7 +130,7 @@ colnames(ari_comparison.m) <- c("Combination", "Experiment", "Method", "ARI")
 ggplot(data = ari_comparison.m, aes(x=Method, y=ARI)) +
   geom_boxplot(outlier.size = 0.35) +
   ylim(0,1) + my_theme_rotated_labels + facet_grid(cols=vars(Combination))
-ggsave(paste0("../figures/coca-b-RBFsigma", RBFsigma,".jpg"), device = "jpeg",
-       width = 15, height = 10,
+ggsave(paste0("../figures/coca-b.jpg"), device = "jpeg",
+       width = 16, height = 10,
        units = "cm")                           
 

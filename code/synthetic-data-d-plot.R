@@ -34,11 +34,11 @@ my_theme_rotated_labels <- theme(
 ##
 
 n_experiments <- 100
-all_ari_one <- all_ari_one_rbfk <- all_weights <- all_weights_rbfk <-
+all_ari_one <- all_ari_one_rbfk <- all_ari_one_rbfk_fixed <- all_weights <-
   matrix(NA, 4, n_experiments)
 all_ari_all <- all_ari_coca <- all_ari_icluster <- all_ari_all_rbfk <-
+  all_ari_all_rbfk_fixed <- all_ari_clusternomics <- 
   rep(NA, n_experiments)
-
 
 separation_level <- 10 # From 1 to 10
 
@@ -47,16 +47,17 @@ for(j in 1:n_experiments){
   load(paste0("../results/ari-d-", j,"-sep-", separation_level,".RData"))
   all_ari_one[,j] <- ari_one
   all_ari_one_rbfk[,j] <- ari_one_rbfk
-  all_weights[,j] <- colMeans(weights)
-  if(!is.na(weights_rbfk)){
-    all_weights_rbfk[,j] <- colMeans(weights_rbfk)
+  all_ari_one_rbfk_fixed[,j] <- ari_one_rbfk_fixed
+  if(!is.na(weights)){
+    all_weights[,j] <- colMeans(weights)
   }
   all_ari_all[j] <- ari_all
   all_ari_coca[j] <- ari_coca
   all_ari_icluster[j] <- ari_icluster
   all_ari_all_rbfk[j] <- ari_all_rbfk
+  all_ari_all_rbfk_fixed[j] <- ari_all_rbfk_fixed
+  all_ari_clusternomics[j] <- ari_clusternomics
 }
-
 
 ### Plot ARI of KLIC ###
 
@@ -112,8 +113,10 @@ ggsave(paste0("../figures/ari-d-sep", separation_level,"-rbf.jpg"),
 # Plot comparison
 
 ari_comparison <- cbind(all_ari_all, all_ari_coca,
-                        all_ari_icluster, all_ari_all_rbfk)
-colnames(ari_comparison) <- c("KLIC", "COCA", "iCluster", "RBF")
+                        all_ari_all_rbfk, all_ari_all_rbfk_fixed,
+                        all_ari_icluster, all_ari_clusternomics)
+colnames(ari_comparison) <- c("KLIC", "COCA", "RBF opt", "RBF fixed",
+                              "iCluster", "Clusternomics")
 ari_comparison.m <- melt(ari_comparison)
 head(ari_comparison.m)
 colnames(ari_comparison.m) <- c("Experiment", "Method", "ARI")
@@ -126,7 +129,8 @@ ggsave(paste0("../figures/coca-d-sep",separation_level,".jpg"),
 
 ################## Plot comparison together with comparison a ##################
 
-all_ari_all_a <- all_ari_coca_a <- all_ari_icluster_a <- all_ari_all_rbfk_a <- 
+all_ari_all_a <- all_ari_coca_a <- all_ari_icluster_a <-
+  all_ari_clusternomics_a <- all_ari_all_rbfk_a <- all_ari_all_rbfk_fixed_a <- 
   rep(NA, n_experiments)
 
 # Load results comparison a
@@ -135,15 +139,23 @@ for(j in 1:n_experiments){
   all_ari_all_a[j] <- ari_all
   all_ari_coca_a[j] <- ari_coca
   all_ari_icluster_a[j] <- ari_icluster
+  all_ari_clusternomics_a[j] <- ari_clusternomics
   all_ari_all_rbfk_a[j] <- ari_all_rbfk
+  all_ari_all_rbfk_fixed_a[j] <- ari_all_rbfk_fixed
 }
 
-ari_comparison_a <- cbind(all_ari_all_a, all_ari_coca_a,
-                        all_ari_icluster_a, all_ari_all_rbfk_a)
+ari_comparison_a <- cbind(all_ari_all_a,
+                          all_ari_coca_a,
+                          all_ari_all_rbfk_a,
+                          all_ari_all_rbfk_fixed_a,
+                          all_ari_icluster_a,
+                          all_ari_clusternomics_a)
 
 ari_both_comparisons <- abind(ari_comparison_a, ari_comparison,  along = 3)
 dimnames(ari_both_comparisons) <- list(c(as.character(1:n_experiments)),
-                                       c("KLIC", "COCA", "iCluster", "RBF"),
+                                       c("KLIC", "COCA", "RBF opt.",
+                                         "RBF fixed", "iCluster",
+                                         "Clusternomics"),
                                        c("Relevant var. only",
                                          "Relevant + irrelevant"))
 ari_both_comparisons.m <- melt(ari_both_comparisons)
@@ -154,4 +166,4 @@ ggplot(data = ari_both_comparisons.m, aes(x=Method, y=ARI)) +
 ggsave(paste0("../figures/coca-a-and-d-sep", separation_level,".jpg"),
        device = "jpeg",
        width = 8, height = 10,
-       units = "cm")    
+       units = "cm")

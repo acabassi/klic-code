@@ -42,7 +42,7 @@ ari_one <- ari_one_rbfk <- ari_one_rbfk_fixed <- rep(NA, n_separation_levels)
 # Initialise parameters for kernel k-means
 parameters <- list()
 parameters$cluster_count <- n_clusters
-parameters$iteration_count <- 100
+parameters$iteration_count <- 1000
 
 # Set parameters for RBF kernels
 RBFsigma <- c(0.001, 0.100, 1.000, 5.000)
@@ -109,9 +109,13 @@ for(i in 1:n_subsets){
   }
 
   # Run KLIC
-  klicOutput <- klic(data_for_klic, n_datasets_per_subset,
+  klicOutput <- tryCatch(klic(data_for_klic, n_datasets_per_subset,
                      individualK = rep(n_clusters, n_datasets_per_subset),
-                     globalK = n_clusters)
+                     globalK = n_clusters, C = 1000),
+  error = function(err)
+    list(globalClusterLabels = rep(NA, 300),
+         weights = NA))
+
 
   # Extract cluster labels and weights
   klic_labels <- klicOutput$globalClusterLabels
@@ -120,10 +124,12 @@ for(i in 1:n_subsets){
   
   weighted_kernel[[i]]<- matrix(0, N, N) 
   count <- 1
-  for (l in datasets_in_subset) {
-    weighted_kernel[[i]] <- weighted_kernel[[i]] +
-      (all_weights[, count] %*% t(all_weights[, count])) * CM_cc[, , count]
-    count <- count + 1
+  if(!is.na(all_weights)){
+    for (l in datasets_in_subset) {
+      weighted_kernel[[i]] <- weighted_kernel[[i]] +
+        (all_weights[, count] %*% t(all_weights[, count])) * CM_cc[, , count]
+      count <- count + 1
+    }
   }
 
   # Compute ARI
@@ -181,16 +187,24 @@ for(i in 1:n_subsets){
   clusternomics <- contextCluster(data_iCluster,
                                   clusterCounts = cluster_counts_clusternomics,
                                   verbose = TRUE)
-  clusternomics_labels <-
-    clusternomics$samples[[length(clusternomics$samples)]]$Global
+  samples <- clusternomics$samples
+  clusters <- plyr::laply(1:length(samples), function(i) samples[[i]]$Global)
+  coclust <- coclusteringMatrix(clusters)
+  diag(coclust) <- 1
+  fit <- hclust(as.dist(1 - coclust))
+  clusternomics_labels <- cutree(fit, k=n_clusters)
   ari_clusternomics[i] <- adjustedRandIndex(clusternomics_labels, cluster_labels)
   
   ### Kernel k-means with RBF kernel ###
-  lmkkmeans_rbfk <- lmkkmeans(CM_rbfk[,,datasets_in_subset], parameters)
+  lmkkmeans_rbfk <- tryCatch(lmkkmeans(CM_rbfk[,,datasets_in_subset], parameters),
+  error = function(err) list(clustering = rep(NA, 300),
+                             Theta = NA))
   rbfk_cluster_labels <- lmkkmeans_rbfk$clustering
   weights_rbfk <- lmkkmeans_rbfk$Theta
   ari_all_rbfk[i] <- adjustedRandIndex(rbfk_cluster_labels, cluster_labels)
-  lmkkmeans_rbfk_fixed <- lmkkmeans(CM_rbfk_fixed[,,datasets_in_subset], parameters)
+  lmkkmeans_rbfk_fixed <- tryCatch(lmkkmeans(CM_rbfk_fixed[,,datasets_in_subset], parameters),
+                                   error = function(err) list(clustering = rep(NA, 300),
+                                                              Theta = NA))
   rbfk_cluster_labels_fixed <- lmkkmeans_rbfk_fixed$clustering
   weights_rbfk_fixed <- lmkkmeans_rbfk_fixed$Theta
   ari_all_rbfk_fixed[i] <- adjustedRandIndex(rbfk_cluster_labels_fixed, cluster_labels)
@@ -200,11 +214,15 @@ for(i in 1:n_subsets){
   weighted_kernel_rbfk[[i]] <- weighted_kernel_rbfk_fixed[[i]] <- matrix(0, N, N)
   count <- 1
   for (l in datasets_in_subset) {
+    if(!is.na(weights_rbfk)){
     weighted_kernel_rbfk[[i]] <- weighted_kernel_rbfk[[i]] +
       (weights_rbfk[, count] %*% t(weights_rbfk[, count])) * CM_rbfk[, , count]
+    }
+    if(!is.na(weights_rbfk_fixed)){
     weighted_kernel_rbfk_fixed[[i]] <- weighted_kernel_rbfk_fixed[[i]] +
       (weights_rbfk_fixed[, count] %*% t(weights_rbfk_fixed[, count])) *
       CM_rbfk_fixed[, , count]
+    }
     count <- count + 1
   }
 }

@@ -31,13 +31,13 @@ load("../data/synthetic-data-c.RData")
 
 ### Clustering one dataset at a time ###
 
-ari_one <- rep(NA, n_types)
+ari_one <- cophenetic <- rep(NA, n_types)
 
 # Initialise parameters for kernel k-means
 parameters <- list()
 parameters$cluster_count <- n_clusters
 
-for(i in 1:n_types){
+for(i in 1:3){
     # Use consensus clustering to find kernel matrix
     CM_temp <- consensusCluster(data[,,i,j], n_clusters)
     # Shift the eigenvalues of the kernel matrix so that it is positive
@@ -47,6 +47,7 @@ for(i in 1:n_types){
     kkmeans_labels <- kkmeans(CM_temp, parameters)$clustering
     # Compute ARI
     ari_one[i] <- adjustedRandIndex(kkmeans_labels, cluster_labels)
+    cophenetic[i] <- copheneticCorrelation(CM_temp)
 }
 
 ### Combining subsets of three datasets ###
@@ -74,7 +75,9 @@ for(i in 1:n_subsets){
   # Run KLIC
   klicOutput <- klic(data_for_klic, n_datasets_per_subset,
                      individualK = rep(n_clusters, n_datasets_per_subset),
-                     globalK = n_clusters)
+                     globalK = n_clusters,
+                     ccClMethods = "hclust",
+                     ccDistHCs = "euclidean")
   
   # Extract cluster labels and weights
   klic_labels <- klicOutput$globalClusterLabels
@@ -85,5 +88,5 @@ for(i in 1:n_subsets){
 }
 
 ### Save results ###
-save(ari_one, ari_all, weights,
-     file = paste0("../results/ari-c-", j,".RData"))
+save(ari_one, ari_all, weights, cophenetic,
+     file = paste0("../results/ari-c-prova-", j,".RData"))

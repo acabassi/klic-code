@@ -76,7 +76,7 @@ ari.m$Datasets <- factor(ari.m$Datasets,
 ggplot(data = ari.m, aes(x=Datasets, y=ARI)) +
   geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_basic_theme
 ggsave(paste0("../figures/ari-d-sep", separation_level,".jpg"),
-       device = "jpeg", width = 15, height = 10,
+       device = "jpeg", width = 7, height = 8,
        units = "cm")
 
 ### Plot weights of KLIC ###
@@ -89,7 +89,7 @@ colnames(weights.m) <- c("Experiment", "Dataset", "Weight")
 ggplot(data = weights.m, aes(x=Dataset, y=Weight)) + 
   geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_basic_theme
 ggsave(paste0("../figures/weights-d-sep", separation_level, ".jpg"),
-       device = "jpeg", width = 12, height = 10,
+       device = "jpeg", width = 7, height = 8,
        units = "cm")
 
 ### Plot ARI of RBF ###
@@ -107,7 +107,7 @@ ari.m$Datasets <- factor(ari.m$Datasets,
 ggplot(data = ari.m, aes(x=Datasets, y=ARI)) +
   geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_basic_theme
 ggsave(paste0("../figures/ari-d-sep", separation_level,"-rbf.jpg"),
-       device = "jpeg", width = 15, height = 10,
+       device = "jpeg", width = 7, height = 8,
        units = "cm")
 
 # Plot comparison
@@ -124,7 +124,7 @@ colnames(ari_comparison.m) <- c("Experiment", "Method", "ARI")
 ggplot(data = ari_comparison.m, aes(x=Method, y=ARI)) +
   geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_theme_rotated_labels
 ggsave(paste0("../figures/coca-d-sep",separation_level,".jpg"),
-       device = "jpeg", width = 6, height = 10,
+       device = "jpeg", width = 7, height = 8,
        units = "cm")
 
 ################## Plot comparison together with comparison a ##################
@@ -157,7 +157,7 @@ dimnames(ari_both_comparisons) <- list(c(as.character(1:n_experiments)),
                                          "RBF fixed", "iCluster",
                                          "Clusternomics"),
                                        c("Relevant var. only",
-                                         "Relevant + irrelevant"))
+                                         "Relevant+irrelev."))
 ari_both_comparisons.m <- melt(ari_both_comparisons)
 colnames(ari_both_comparisons.m) <- c("Experiment", "Method", "Setting", "ARI")
 ggplot(data = ari_both_comparisons.m, aes(x=Method, y=ARI)) +
@@ -165,5 +165,5 @@ ggplot(data = ari_both_comparisons.m, aes(x=Method, y=ARI)) +
   ylim(0,1) + my_theme_rotated_labels + facet_grid(cols=vars(Setting))
 ggsave(paste0("../figures/coca-a-and-d-sep", separation_level,".jpg"),
        device = "jpeg",
-       width = 8, height = 10,
+       width = 7, height = 8,
        units = "cm")

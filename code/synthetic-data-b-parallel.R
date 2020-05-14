@@ -55,7 +55,7 @@ dimnames(CM_rbfk) <- dimnames(CM_cc) <-
 
 for(i in 1:n_separation_levels){
     # Use consensus clustering to find kernel matrix
-    CM_cc_temp <- consensusCluster(data[,,i,j], n_clusters)
+    CM_cc_temp <- consensusCluster(data[,,i,j], n_clusters, clMethod = "kmeans")
     # Use RBF kernel to obtain another kernel matrix
     CM_rbfk_temp <- rbfkernel(data[,,i,j], sigma = RBFsigma[i])
     CM_rbfk_fixed_temp <- rbfkernel(data[,,i,j], sigma = 1)
@@ -111,11 +111,10 @@ for(i in 1:n_subsets){
   # Run KLIC
   klicOutput <- tryCatch(klic(data_for_klic, n_datasets_per_subset,
                      individualK = rep(n_clusters, n_datasets_per_subset),
-                     globalK = n_clusters, C = 1000),
+                     globalK = n_clusters, ccClMethods = "kmeans", C = 1000),
   error = function(err)
     list(globalClusterLabels = rep(NA, 300),
-         weights = NA))
-
+         weights = matrix(NA, 300, 3)))
 
   # Extract cluster labels and weights
   klic_labels <- klicOutput$globalClusterLabels

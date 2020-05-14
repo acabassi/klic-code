@@ -37,7 +37,6 @@ Sigma <- diag(n_variables)
 i = 3 # Medium separation level
 # (Change value to 8 just for the illustrative plot in the paper)
 for(j in 1:n_experiments){
-  mu = rep(NA, N)
   for(t in 1:(n_types-1)){
     for(k in 1:(n_clusters/t)){
       mu = rep(k*(i-1)/3, n_variables)

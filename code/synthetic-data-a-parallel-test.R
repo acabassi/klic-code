@@ -131,7 +131,7 @@ weights_sparse <- klicOutput_sparse$weights
 
 # Compute ARI
 ari_all <- adjustedRandIndex(klic_labels, cluster_labels) 
-all_all2 <- adjustedRandIndex(klic_labels2, cluster_labels)
+ari_all2 <- adjustedRandIndex(klic_labels2, cluster_labels)
 ari_all_binary <- adjustedRandIndex(klic_labels_binary, cluster_labels)
 ari_all_sparse <- adjustedRandIndex(klic_labels_sparse, cluster_labels)
 ari_all_sparse2 <- adjustedRandIndex(klic_labels_sparse2, cluster_labels)
@@ -199,7 +199,7 @@ for (i in 1:n_datasets_same_rho) {
 save(ari_one, ari_one_binary, ari_one_sparse,
      coph, coph_binary, coph_sparse,
      ari_all,  ari_all_binary, ari_all_sparse,
-     ari_all2, ari_sparse2,
+     ari_all2, ari_all_sparse2,
      ari_coca, ari_coca_sparcl,
      moc, moc_sparcl,
      weights, weights_binary, weights_sparse,

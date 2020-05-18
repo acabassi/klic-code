@@ -40,7 +40,7 @@ all_ari_all <- all_ari_coca <- all_ari_icluster <- all_ari_all_rbfk <-
   all_ari_all_rbfk_fixed <- all_ari_clusternomics <- 
   rep(NA, n_experiments)
 
-separation_level <- 10 # From 1 to 10
+separation_level <- 4 # From 1 to 10
 
 ###  Load results ###
 for(j in 1:n_experiments){
@@ -75,9 +75,9 @@ ari.m$Datasets <- factor(ari.m$Datasets,
 
 ggplot(data = ari.m, aes(x=Datasets, y=ARI)) +
   geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_basic_theme
-ggsave(paste0("../figures/ari-d-sep", separation_level,".jpg"),
-       device = "jpeg", width = 7, height = 8,
-       units = "cm")
+# ggsave(paste0("../figures/ari-d-sep", separation_level,".jpg"),
+#        device = "jpeg", width = 7, height = 8,
+#        units = "cm")
 
 ### Plot weights of KLIC ###
 
@@ -88,9 +88,9 @@ head(weights.m)
 colnames(weights.m) <- c("Experiment", "Dataset", "Weight")
 ggplot(data = weights.m, aes(x=Dataset, y=Weight)) + 
   geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_basic_theme
-ggsave(paste0("../figures/weights-d-sep", separation_level, ".jpg"),
-       device = "jpeg", width = 7, height = 8,
-       units = "cm")
+# ggsave(paste0("../figures/weights-d-sep", separation_level, ".jpg"),
+#        device = "jpeg", width = 7, height = 8,
+#        units = "cm")
 
 ### Plot ARI of RBF ###
 ### 
@@ -106,9 +106,9 @@ ari.m$Datasets <- factor(ari.m$Datasets,
 
 ggplot(data = ari.m, aes(x=Datasets, y=ARI)) +
   geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_basic_theme
-ggsave(paste0("../figures/ari-d-sep", separation_level,"-rbf.jpg"),
-       device = "jpeg", width = 7, height = 8,
-       units = "cm")
+# ggsave(paste0("../figures/ari-d-sep", separation_level,"-rbf.jpg"),
+#        device = "jpeg", width = 7, height = 8,
+#        units = "cm")
 
 # Plot comparison
 
@@ -123,9 +123,9 @@ colnames(ari_comparison.m) <- c("Experiment", "Method", "ARI")
 
 ggplot(data = ari_comparison.m, aes(x=Method, y=ARI)) +
   geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_theme_rotated_labels
-ggsave(paste0("../figures/coca-d-sep",separation_level,".jpg"),
-       device = "jpeg", width = 7, height = 8,
-       units = "cm")
+# ggsave(paste0("../figures/coca-d-sep",separation_level,".jpg"),
+#        device = "jpeg", width = 7, height = 8,
+#        units = "cm")
 
 ################## Plot comparison together with comparison a ##################
 
@@ -163,7 +163,7 @@ colnames(ari_both_comparisons.m) <- c("Experiment", "Method", "Setting", "ARI")
 ggplot(data = ari_both_comparisons.m, aes(x=Method, y=ARI)) +
   geom_boxplot(outlier.size = 0.35) +
   ylim(0,1) + my_theme_rotated_labels + facet_grid(cols=vars(Setting))
-ggsave(paste0("../figures/coca-a-and-d-sep", separation_level,".jpg"),
+ggsave(paste0("../figures/coca-a-and-d-sep", separation_level,"-nstart20.jpg"),
        device = "jpeg",
        width = 7, height = 8,
        units = "cm")

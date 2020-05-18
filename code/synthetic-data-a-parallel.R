@@ -32,7 +32,7 @@ uno <- rep(1, n_obs_per_cluster)
 cluster_labels <- c(uno, uno*2, uno*3, uno*4, uno*5, uno*6)
 
 args <- commandArgs(trailingOnly=TRUE)
-separation_level <- as.integer(args[1]) # Same for all datasets
+seseparation_level <- as.integer(args[1]) # Same for all datasets
 load(paste0("../data/synthetic-data-a-sep", separation_level,".RData"))
 load("../data/RBF_sigma_values.RData")
 
@@ -47,7 +47,7 @@ CM <- CM_rbfk <- CM_rbfk_fixed <- array(NA, c(N, N, n_datasets_same_rho))
 
 for(i in 1:n_datasets_same_rho){
     # Use consensus clustering to find kernel matrix
-    CM_temp <- consensusCluster(data[,,i,j], n_clusters)
+    CM_temp <- consensusCluster(data[,,i,j], n_clusters, clMethod = "kmeans")
     # Use RBF kernel to obtain another kernel matrix
     CM_rbfk_temp <- rbfkernel(data[,,i,j], sigma = RBF_sigmas[separation_level])
     CM_rbfk_fixed_temp <- rbfkernel(data[,,i,j], sigma = 1)

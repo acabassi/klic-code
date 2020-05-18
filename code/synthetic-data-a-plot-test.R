@@ -40,7 +40,7 @@ all_ari_all <- all_ari_coca <- all_ari_all_sparse <- all_ari_all_binary <-
   all_ari_coca_sparse <- 
   rep(NA, n_experiments)
 
-separation_level <- 4 # Must be an integer between 1 and 10
+separation_level <- 10 # Must be an integer between 1 and 10
 # In the main paper, we are showing separation_level = 4
 
 ###  Load results ###
@@ -58,11 +58,11 @@ for(j in 1:n_experiments){
 
 ### Plot weighted kernel matrices of one of the experiments ###
 
-Heatmap(weighted_kernel)
-Heatmap(weighted_kernel_binary)
-Heatmap(weighted_kernel_sparse)
-Heatmap(moc, cluster_rows = FALSE, cluster_columns = FALSE)
-Heatmap(moc_sparcl, cluster_rows = FALSE, cluster_columns = FALSE)
+# Heatmap(weighted_kernel)
+# Heatmap(weighted_kernel_binary)
+# Heatmap(weighted_kernel_sparse)
+# Heatmap(moc, cluster_rows = FALSE, cluster_columns = FALSE)
+# Heatmap(moc_sparcl, cluster_rows = FALSE, cluster_columns = FALSE)
 
 ### Plot ARI of KLIC ###
 

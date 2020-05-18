@@ -52,7 +52,7 @@ for(i in 1:n_datasets_same_rho){
     CM_sparse_temp <-
       consensusCluster(data[,,i,j], n_clusters, clMethod = "sparse-kmeans")
     
-    kmeans_cluster_labels <- kmeans(data[,,i,j], 6)$cluster
+    kmeans_cluster_labels <- kmeans(data[,,i,j], 6, nstart = 20)$cluster
     CM_binary_temp <- matrix(0, N, N)
     for(index_1 in 1:N){
       for(index_2 in 1:N){
@@ -149,7 +149,7 @@ ari_kmeans_sparse <- rep(NA, n_datasets_same_rho)
 # Find clusters in each dataset
 for(i in 1:n_datasets_same_rho){
   
-  kmeans_cluster_labels <- kmeans(data[,,i,j], n_clusters)$cluster
+  kmeans_cluster_labels <- kmeans(data[,,i,j], n_clusters, nstart = 20)$cluster
   sparse_kmeans_cluster_labels <- KMeansSparseCluster(data[,,i,j], n_clusters,
                                                       wbounds = sqrt(2))[[1]]$Cs
   

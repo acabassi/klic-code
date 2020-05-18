@@ -123,6 +123,6 @@ colnames(ari_comparison.m) <- c("Experiment", "Method", "ARI")
 
 ggplot(data = ari_comparison.m, aes(x=Method, y=ARI)) +
   geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_theme_rotated_labels
-ggsave(paste0("../figures/coca-a-sep",separation_level,".jpg"),
+ggsave(paste0("../figures/coca-a-sep",separation_level,"-nstart-20.jpg"),
        device = "jpeg", width = 6, height = 10,
        units = "cm")

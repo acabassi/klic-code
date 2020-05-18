@@ -75,9 +75,9 @@ ari.m$Datasets <- factor(ari.m$Datasets,
 
 ggplot(data = ari.m, aes(x=Datasets, y=ARI)) +
   geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_basic_theme
-ggsave(paste0("../figures/ari-a-sep", separation_level,".jpg"),
-       device = "jpeg", width = 7, height = 8,
-       units = "cm")
+# ggsave(paste0("../figures/ari-a-sep", separation_level,".jpg"),
+#        device = "jpeg", width = 7, height = 8,
+#        units = "cm")
 
 ### Plot weights of KLIC ###
 
@@ -88,9 +88,9 @@ head(weights.m)
 colnames(weights.m) <- c("Experiment", "Dataset", "Weight")
 ggplot(data = weights.m, aes(x=Dataset, y=Weight)) + 
   geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_basic_theme
-ggsave(paste0("../figures/weights-a-sep", separation_level, ".jpg"),
-       device = "jpeg", width = 7, height = 8,
-       units = "cm")
+# ggsave(paste0("../figures/weights-a-sep", separation_level, ".jpg"),
+#        device = "jpeg", width = 7, height = 8,
+#        units = "cm")
 
 ### Plot ARI of RBF ###
 ### 
@@ -106,9 +106,9 @@ ari.m$Datasets <- factor(ari.m$Datasets,
 
 ggplot(data = ari.m, aes(x=Datasets, y=ARI)) +
   geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_basic_theme
-ggsave(paste0("../figures/ari-a-sep", separation_level,"-rbf.jpg"),
-       device = "jpeg", width = 15, height = 10,
-       units = "cm")
+# ggsave(paste0("../figures/ari-a-sep", separation_level,"-rbf.jpg"),
+#        device = "jpeg", width = 15, height = 10,
+#        units = "cm")
 
 # Plot comparison
 
@@ -123,6 +123,6 @@ colnames(ari_comparison.m) <- c("Experiment", "Method", "ARI")
 
 ggplot(data = ari_comparison.m, aes(x=Method, y=ARI)) +
   geom_boxplot(outlier.size = 0.3) + ylim(0,1) + my_theme_rotated_labels
-ggsave(paste0("../figures/coca-a-sep",separation_level,"-nstart-20.jpg"),
-       device = "jpeg", width = 6, height = 10,
-       units = "cm")
+# ggsave(paste0("../figures/coca-a-sep",separation_level,"-nstart-20.jpg"),
+#        device = "jpeg", width = 6, height = 10,
+#        units = "cm")

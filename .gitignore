@@ -47,3 +47,4 @@ machine.file.*
 slurm-*.out
 slurm_submit*
 *.Rout
+.DS_Store

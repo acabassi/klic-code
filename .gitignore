@@ -8,6 +8,7 @@
 # Results
 results/*
 results-nstart-1/*
+results-nstart-20/*
 
 # Example code in package build process
 *-Ex.R

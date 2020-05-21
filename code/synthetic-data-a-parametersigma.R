@@ -86,7 +86,7 @@ ari.m$Sigma <- as.factor(ari.m$Sigma)
 ggplot(data=ari.m, aes(x=Sigma, y=ARI)) + geom_boxplot(outlier.size = 0.35) +
   ylim(0, 1) + my_theme_rotated_labels + facet_wrap(~ Separation, nrow = 2)
 ggsave("../figures/choiceRBFsigma.jpg", device = "jpeg",
-       width = 15, height = 20,
+       width = 18, height = 20,
        units = "cm")
 
 # Choose most appropriate value of sigma for each separation level
